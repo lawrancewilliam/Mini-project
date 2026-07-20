@@ -131,15 +131,15 @@
           <h4 class="text-sm font-bold text-dark-charcoal uppercase tracking-wider mb-2">Exposure Impact Metrics</h4>
           <div class="space-y-3 text-xs font-medium text-dark-charcoal/70">
             <div class="flex items-center gap-2">
-              <span class="w-1.5 h-1.5 rounded-full bg-accent-orange"></span>
+              <span class="w-1.5 h-1.5 rounded-full bg-accent-purple"></span>
               <span><strong>Credential Scope:</strong> Keys granting access to production databases or cloud platforms elevate score exponentially.</span>
             </div>
             <div class="flex items-center gap-2">
-              <span class="w-1.5 h-1.5 rounded-full bg-accent-orange"></span>
+              <span class="w-1.5 h-1.5 rounded-full bg-accent-purple"></span>
               <span><strong>AI Verification:</strong> Active leaks validated by AST environments carry 2x weight over unconfirmed matching.</span>
             </div>
             <div class="flex items-center gap-2">
-              <span class="w-1.5 h-1.5 rounded-full bg-accent-orange"></span>
+              <span class="w-1.5 h-1.5 rounded-full bg-accent-purple"></span>
               <span><strong>Containment Status:</strong> Revoking credentials or flagging them as sandbox test keys reduces calculated hazard levels.</span>
             </div>
           </div>
@@ -178,14 +178,14 @@
                     localStorage.setItem('selected_finding_id', risk.id);
                     goto('/dashboard/ai-analysis');
                   }}
-                  class="flex-1 sm:flex-initial text-xs font-bold bg-bg-warm border border-dark-charcoal/20 px-4 py-2 rounded-xl text-dark-charcoal hover:bg-accent-orange hover:text-bg-warm hover:border-accent-orange transition-colors cursor-pointer"
+                  class="flex-1 sm:flex-initial text-xs font-bold bg-bg-warm border border-dark-charcoal/20 px-4 py-2 rounded-xl text-dark-charcoal hover:bg-accent-purple hover:text-bg-warm hover:border-accent-purple transition-colors cursor-pointer"
                 >
                   Investigate
                 </button>
                 
                 <button
                   onclick={() => goto('/dashboard/recommendations')}
-                  class="flex-1 sm:flex-initial text-xs font-bold bg-accent-orange text-bg-warm border border-accent-orange px-4 py-2 rounded-xl hover:bg-dark-charcoal hover:text-bg-warm hover:border-dark-charcoal transition-colors cursor-pointer"
+                  class="flex-1 sm:flex-initial text-xs font-bold bg-accent-purple text-bg-warm border border-accent-purple px-4 py-2 rounded-xl hover:bg-dark-charcoal hover:text-bg-warm hover:border-dark-charcoal transition-colors cursor-pointer"
                 >
                   View Fix
                 </button>

@@ -71,7 +71,7 @@
           {#each project.findings as item}
             <button
               onclick={() => selectedFindingId = item.id}
-              class="w-full text-left p-3.5 rounded-2xl border transition-all text-xs font-semibold flex flex-col gap-1.5 cursor-pointer {selectedFindingId === item.id ? 'bg-bg-warm border-accent-orange shadow-sm' : 'bg-bg-warm/50 border-dark-charcoal/5 hover:border-dark-charcoal/15'}"
+              class="w-full text-left p-3.5 rounded-2xl border transition-all text-xs font-semibold flex flex-col gap-1.5 cursor-pointer {selectedFindingId === item.id ? 'bg-bg-warm border-accent-purple shadow-sm' : 'bg-bg-warm/50 border-dark-charcoal/5 hover:border-dark-charcoal/15'}"
             >
               <div class="flex items-center justify-between gap-2">
                 <span class="font-bold truncate text-dark-charcoal max-w-[120px]">{item.secretType}</span>
@@ -109,7 +109,7 @@
             <div class="mt-6 space-y-2">
               <div class="flex items-center justify-between text-xs font-bold text-dark-charcoal/60">
                 <span>Code Context</span>
-                <span class="text-accent-orange font-mono">⚠️ Confirmed hardcoded secret</span>
+                <span class="text-accent-purple font-mono">⚠️ Confirmed hardcoded secret</span>
               </div>
               
               <div class="relative bg-dark-charcoal rounded-2xl p-5 overflow-hidden shadow-inner text-bg-warm font-mono text-xs leading-relaxed">
@@ -156,7 +156,7 @@
                 </p>
               </div>
               
-              <div class="text-[10px] text-accent-orange font-bold uppercase tracking-wider mt-4">
+              <div class="text-[10px] text-accent-purple font-bold uppercase tracking-wider mt-4">
                 Verified: Heuristic signature matching & AST analysis check
               </div>
             </div>
@@ -186,8 +186,8 @@
 
             <div class="text-sm font-semibold text-dark-charcoal/80 space-y-3 leading-relaxed">
               <p>{selectedFinding().fix}</p>
-              <div class="bg-bg-warm border-l-4 border-l-accent-orange p-3.5 rounded-r-xl">
-                <span class="text-xs font-bold text-accent-orange block uppercase tracking-wider">SecurAI Best Practice:</span>
+              <div class="bg-bg-warm border-l-4 border-l-accent-purple p-3.5 rounded-r-xl">
+                <span class="text-xs font-bold text-accent-purple block uppercase tracking-wider">SecurAI Best Practice:</span>
                 <p class="text-xs text-dark-charcoal/70 mt-1 font-semibold">{selectedFinding().bestPractice}</p>
               </div>
             </div>

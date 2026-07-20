@@ -103,13 +103,13 @@ Generated dynamically by SecurAI Credential Scanner.
                   <div class="flex items-center justify-end gap-2">
                     <button
                       onclick={() => handlePreview(item)}
-                      class="text-xs font-bold bg-bg-warm border border-dark-charcoal/20 px-3 py-1.5 rounded-lg text-dark-charcoal hover:bg-accent-orange hover:text-bg-warm transition-all cursor-pointer"
+                      class="text-xs font-bold bg-bg-warm border border-dark-charcoal/20 px-3 py-1.5 rounded-lg text-dark-charcoal hover:bg-accent-purple hover:text-bg-warm transition-all cursor-pointer"
                     >
                       Preview
                     </button>
                     <button
                       onclick={() => triggerDownload(item)}
-                      class="text-xs font-bold bg-accent-orange text-bg-warm px-3 py-1.5 rounded-lg hover:bg-dark-charcoal transition-all cursor-pointer"
+                      class="text-xs font-bold bg-accent-purple text-bg-warm px-3 py-1.5 rounded-lg hover:bg-dark-charcoal transition-all cursor-pointer"
                     >
                       Download Report
                     </button>
@@ -199,7 +199,7 @@ No hardcoded credentials or API keys found in this codebase scan.
         
         <button
           onclick={() => { triggerDownload(selectedProject); showPreviewModal = false; }}
-          class="bg-accent-orange text-bg-warm font-bold text-xs px-5 py-2.5 rounded-xl hover:bg-dark-charcoal transition-all shadow-md orange-glow cursor-pointer"
+          class="bg-accent-purple text-bg-warm font-bold text-xs px-5 py-2.5 rounded-xl hover:bg-dark-charcoal transition-all shadow-md purple-glow cursor-pointer"
         >
           Download Document
         </button>

@@ -11,7 +11,7 @@
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
-<div class="min-h-screen bg-bg-warm text-dark-charcoal selection:bg-accent-orange selection:text-white">
+<div class="min-h-screen bg-bg-warm text-dark-charcoal selection:bg-accent-purple selection:text-white">
 	{@render children()}
 </div>
 

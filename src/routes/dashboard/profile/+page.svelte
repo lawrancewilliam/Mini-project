@@ -60,11 +60,11 @@
     <img
       src={appState.currentUser?.avatar}
       alt="User profile"
-      class="w-24 h-24 rounded-3xl object-cover border-2 border-accent-orange/30 shadow-md shrink-0"
+      class="w-24 h-24 rounded-3xl object-cover border-2 border-accent-purple/30 shadow-md shrink-0"
     />
     
     <div class="text-center sm:text-left space-y-2 flex-1">
-      <div class="inline-block bg-accent-orange/15 border border-accent-orange/20 text-accent-orange font-bold text-xs px-3 py-1 rounded-full uppercase tracking-wider">
+      <div class="inline-block bg-accent-purple/15 border border-accent-purple/20 text-accent-purple font-bold text-xs px-3 py-1 rounded-full uppercase tracking-wider">
         {appState.currentUser?.role} Console Access
       </div>
       <h3 class="text-2xl font-bold font-display text-dark-charcoal">{appState.currentUser?.name}</h3>
@@ -101,7 +101,7 @@
               id="prof-name"
               bind:value={profileName}
               required
-              class="w-full bg-bg-warm border border-dark-charcoal/15 px-4 py-2.5 rounded-xl text-sm font-semibold text-dark-charcoal focus:outline-none focus:border-accent-orange orange-glow-border transition-all"
+              class="w-full bg-bg-warm border border-dark-charcoal/15 px-4 py-2.5 rounded-xl text-sm font-semibold text-dark-charcoal focus:outline-none focus:border-accent-purple purple-glow-border transition-all"
             />
           </div>
 
@@ -112,7 +112,7 @@
               id="prof-avatar"
               bind:value={profileAvatar}
               required
-              class="w-full bg-bg-warm border border-dark-charcoal/15 px-4 py-2.5 rounded-xl text-sm font-semibold text-dark-charcoal focus:outline-none focus:border-accent-orange orange-glow-border transition-all"
+              class="w-full bg-bg-warm border border-dark-charcoal/15 px-4 py-2.5 rounded-xl text-sm font-semibold text-dark-charcoal focus:outline-none focus:border-accent-purple purple-glow-border transition-all"
             />
           </div>
 
@@ -125,7 +125,7 @@
           <div class="pt-4">
             <button
               type="submit"
-              class="bg-accent-orange text-bg-warm font-bold text-xs px-5 py-2.5 rounded-xl hover:bg-dark-charcoal hover:text-bg-warm transition-colors cursor-pointer shadow-sm"
+              class="bg-accent-purple text-bg-warm font-bold text-xs px-5 py-2.5 rounded-xl hover:bg-dark-charcoal hover:text-bg-warm transition-colors cursor-pointer shadow-sm"
             >
               Save Profile Changes
             </button>
@@ -149,7 +149,7 @@
               bind:value={oldPassword}
               required
               placeholder="••••••••"
-              class="w-full bg-bg-warm border border-dark-charcoal/15 px-4 py-2.5 rounded-xl text-sm font-semibold text-dark-charcoal focus:outline-none focus:border-accent-orange orange-glow-border transition-all"
+              class="w-full bg-bg-warm border border-dark-charcoal/15 px-4 py-2.5 rounded-xl text-sm font-semibold text-dark-charcoal focus:outline-none focus:border-accent-purple purple-glow-border transition-all"
             />
           </div>
 
@@ -162,7 +162,7 @@
                 bind:value={newPassword}
                 required
                 placeholder="Min 6 chars"
-                class="w-full bg-bg-warm border border-dark-charcoal/15 px-4 py-2.5 rounded-xl text-sm font-semibold text-dark-charcoal focus:outline-none focus:border-accent-orange orange-glow-border transition-all"
+                class="w-full bg-bg-warm border border-dark-charcoal/15 px-4 py-2.5 rounded-xl text-sm font-semibold text-dark-charcoal focus:outline-none focus:border-accent-purple purple-glow-border transition-all"
               />
             </div>
             
@@ -174,7 +174,7 @@
                 bind:value={confirmPassword}
                 required
                 placeholder="Re-type password"
-                class="w-full bg-bg-warm border border-dark-charcoal/15 px-4 py-2.5 rounded-xl text-sm font-semibold text-dark-charcoal focus:outline-none focus:border-accent-orange orange-glow-border transition-all"
+                class="w-full bg-bg-warm border border-dark-charcoal/15 px-4 py-2.5 rounded-xl text-sm font-semibold text-dark-charcoal focus:outline-none focus:border-accent-purple purple-glow-border transition-all"
               />
             </div>
           </div>
@@ -194,7 +194,7 @@
           <div class="pt-4">
             <button
               type="submit"
-              class="bg-accent-orange text-bg-warm font-bold text-xs px-5 py-2.5 rounded-xl hover:bg-dark-charcoal hover:text-bg-warm transition-colors cursor-pointer shadow-sm"
+              class="bg-accent-purple text-bg-warm font-bold text-xs px-5 py-2.5 rounded-xl hover:bg-dark-charcoal hover:text-bg-warm transition-colors cursor-pointer shadow-sm"
             >
               Update Password
             </button>

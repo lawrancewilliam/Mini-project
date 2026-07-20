@@ -8,7 +8,7 @@
 
   --color-bg-warm: #000000;
   --color-card-warm: #161616;
-  --color-accent-orange: #E67514;
+  --color-accent-purple: #7C3AED;
   --color-dark-charcoal: #FFFFFF;
   
   --animate-scan: scan 2.5s linear infinite;
@@ -28,18 +28,18 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
 }
 
-.orange-glow {
-  box-shadow: 0 0 15px rgba(230, 117, 20, 0.25);
+.purple-glow {
+  box-shadow: 0 0 15px rgba(124, 58, 237, 0.25);
 }
 
-.orange-glow-lg {
-  box-shadow: 0 0 30px rgba(230, 117, 20, 0.4);
+.purple-glow-lg {
+  box-shadow: 0 0 30px rgba(124, 58, 237, 0.4);
 }
 
-.orange-glow-border:focus {
+.purple-glow-border:focus {
   outline: none;
-  border-color: #E67514;
-  box-shadow: 0 0 10px rgba(230, 117, 20, 0.35);
+  border-color: #7C3AED;
+  box-shadow: 0 0 10px rgba(124, 58, 237, 0.35);
 }
 
 @keyframes scan {
@@ -73,5 +73,5 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #E67514;
+  background: #7C3AED;
 }

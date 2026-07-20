@@ -51,7 +51,7 @@
         <div class="text-4xl font-extrabold font-display text-dark-charcoal mt-2">{totalProjects}</div>
         <div class="text-xs font-semibold text-dark-charcoal/60 mt-1">Total active repositories</div>
       </div>
-      <div class="p-4 bg-accent-orange/10 text-accent-orange rounded-2xl">
+      <div class="p-4 bg-accent-purple/10 text-accent-purple rounded-2xl">
         <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
         </svg>
@@ -211,7 +211,7 @@
 
         <div class="mt-6 pt-6 border-t border-dark-charcoal/10 flex items-center justify-between">
           <div class="text-xs font-extrabold text-dark-charcoal">Total Findings:</div>
-          <div class="text-sm font-extrabold text-accent-orange">{project.secretsFound} Secrets</div>
+          <div class="text-sm font-extrabold text-accent-purple">{project.secretsFound} Secrets</div>
         </div>
       </div>
 
@@ -230,7 +230,7 @@
                     <span>{item.count}</span>
                   </div>
                   <div class="w-full bg-bg-warm rounded-full h-2">
-                    <div class="bg-accent-orange h-2 rounded-full transition-all duration-500" style="width: {project.secretsFound > 0 ? (item.count / project.secretsFound) * 100 : 0}%"></div>
+                    <div class="bg-accent-purple h-2 rounded-full transition-all duration-500" style="width: {project.secretsFound > 0 ? (item.count / project.secretsFound) * 100 : 0}%"></div>
                   </div>
                 </div>
               {/each}
@@ -243,7 +243,7 @@
         </div>
 
         <div class="mt-6 pt-6 border-t border-dark-charcoal/10 text-center">
-          <a href="/dashboard/results" class="text-xs font-bold text-accent-orange hover:underline inline-flex items-center gap-1">
+          <a href="/dashboard/results" class="text-xs font-bold text-accent-purple hover:underline inline-flex items-center gap-1">
             View full details table
             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
           </a>
@@ -279,7 +279,7 @@
             {#each appState.scans.slice(0, 5) as item}
               <tr
                 onclick={() => appState.setSelectedScan(item.id)}
-                class="border-b border-dark-charcoal/5 text-sm font-semibold text-dark-charcoal hover:bg-bg-warm/40 transition-colors cursor-pointer {appState.selectedScanId === item.id ? 'bg-bg-warm/75 border-l-4 border-l-accent-orange' : ''}"
+                class="border-b border-dark-charcoal/5 text-sm font-semibold text-dark-charcoal hover:bg-bg-warm/40 transition-colors cursor-pointer {appState.selectedScanId === item.id ? 'bg-bg-warm/75 border-l-4 border-l-accent-purple' : ''}"
               >
                 <td class="py-3.5 px-4 font-bold">{item.projectName}</td>
                 <td class="py-3.5 px-4 text-xs font-medium text-dark-charcoal/70">{item.date}</td>
@@ -302,7 +302,7 @@
                   <div class="flex items-center justify-end gap-2">
                     <button
                       onclick={() => appState.setSelectedScan(item.id)}
-                      class="text-xs font-bold bg-bg-warm border border-dark-charcoal/20 px-2.5 py-1 rounded-md text-dark-charcoal hover:bg-accent-orange hover:text-bg-warm transition-colors cursor-pointer"
+                      class="text-xs font-bold bg-bg-warm border border-dark-charcoal/20 px-2.5 py-1 rounded-md text-dark-charcoal hover:bg-accent-purple hover:text-bg-warm transition-colors cursor-pointer"
                     >
                       Inspect
                     </button>
@@ -326,14 +326,14 @@
     </div>
   {:else}
     <div class="bg-card-warm border border-dark-charcoal/10 rounded-3xl p-12 text-center shadow-sm">
-      <div class="w-16 h-16 rounded-3xl bg-accent-orange/10 text-accent-orange flex items-center justify-center mx-auto mb-6">
+      <div class="w-16 h-16 rounded-3xl bg-accent-purple/10 text-accent-purple flex items-center justify-center mx-auto mb-6">
         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
         </svg>
       </div>
       <h3 class="text-xl font-bold font-display text-dark-charcoal">No Scans Recorded</h3>
       <p class="text-sm text-dark-charcoal/60 mt-2 max-w-sm mx-auto">Upload and scan your codebase archives to start seeing results in your dashboard.</p>
-      <a href="/dashboard/upload" class="inline-flex items-center gap-2 bg-accent-orange text-bg-warm font-bold px-6 py-3 rounded-xl mt-6 hover:bg-dark-charcoal hover:text-bg-warm transition-colors">
+      <a href="/dashboard/upload" class="inline-flex items-center gap-2 bg-accent-purple text-bg-warm font-bold px-6 py-3 rounded-xl mt-6 hover:bg-dark-charcoal hover:text-bg-warm transition-colors">
         Upload Project
       </a>
     </div>

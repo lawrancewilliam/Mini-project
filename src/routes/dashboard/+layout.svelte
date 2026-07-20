@@ -90,10 +90,10 @@
   <!-- Mobile Header -->
   <div class="md:hidden flex items-center justify-between bg-card-warm border-b border-dark-charcoal/10 px-6 py-4">
     <div class="flex items-center gap-2 text-xl font-bold font-display text-dark-charcoal">
-      <svg class="w-6 h-6 text-accent-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg class="w-6 h-6 text-accent-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
       </svg>
-      <span>Secur<span class="text-accent-orange">AI</span></span>
+      <span>Secur<span class="text-accent-purple">AI</span></span>
     </div>
     
     <button onclick={() => isMobileMenuOpen = !isMobileMenuOpen} class="text-dark-charcoal p-1 focus:outline-none">
@@ -110,10 +110,10 @@
     <div>
       <!-- Brand Logo -->
       <a href="/" class="hidden md:flex items-center gap-2 text-2xl font-bold font-display tracking-tight text-dark-charcoal mb-8">
-        <svg class="w-8 h-8 text-accent-orange animate-pulse-glow rounded-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-8 h-8 text-accent-purple animate-pulse-glow rounded-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
         </svg>
-        <span>Secur<span class="text-accent-orange">AI</span></span>
+        <span>Secur<span class="text-accent-purple">AI</span></span>
       </a>
 
       <!-- Navigation links -->
@@ -122,7 +122,7 @@
           <a
             href={item.path}
             onclick={() => isMobileMenuOpen = false}
-            class="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all duration-200 {isActive(item.path) ? 'bg-accent-orange text-bg-warm shadow-md' : 'text-dark-charcoal/70 hover:text-dark-charcoal hover:bg-bg-warm/75'}"
+            class="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all duration-200 {isActive(item.path) ? 'bg-accent-purple text-bg-warm shadow-md' : 'text-dark-charcoal/70 hover:text-dark-charcoal hover:bg-bg-warm/75'}"
           >
             {@html item.icon}
             <span>{item.name}</span>
@@ -134,7 +134,7 @@
     <!-- User Profile & Logout -->
     <div class="mt-8 border-t border-dark-charcoal/10 pt-6 space-y-4">
       <div class="flex items-center gap-3">
-        <img src={appState.currentUser.avatar} alt="User avatar" class="w-10 h-10 rounded-xl object-cover border border-accent-orange/20" />
+        <img src={appState.currentUser.avatar} alt="User avatar" class="w-10 h-10 rounded-xl object-cover border border-accent-purple/20" />
         <div class="min-w-0 flex-1">
           <div class="font-bold text-sm text-dark-charcoal truncate">{appState.currentUser.name}</div>
           <div class="text-[10px] bg-dark-charcoal/10 border border-dark-charcoal/15 text-dark-charcoal/70 rounded px-1.5 py-0.5 font-bold uppercase tracking-wider inline-block mt-0.5">
@@ -186,8 +186,8 @@
       </div>
 
       <!-- Active Scan Project Selector -->
-      <div class="flex items-center gap-3 bg-bg-warm px-4 py-2 border border-accent-orange/30 focus-within:border-accent-orange focus-within:ring-2 focus-within:ring-accent-orange/20 rounded-2xl max-w-xs w-full sm:w-auto transition-all orange-glow">
-        <span class="text-xs font-bold text-accent-orange uppercase tracking-wider whitespace-nowrap">Target:</span>
+      <div class="flex items-center gap-3 bg-bg-warm px-4 py-2 border border-accent-purple/30 focus-within:border-accent-purple focus-within:ring-2 focus-within:ring-accent-purple/20 rounded-2xl max-w-xs w-full sm:w-auto transition-all purple-glow">
+        <span class="text-xs font-bold text-accent-purple uppercase tracking-wider whitespace-nowrap">Target:</span>
         {#if appState.scans.length > 0}
           <select
             value={appState.selectedScanId}

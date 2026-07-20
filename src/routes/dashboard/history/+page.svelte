@@ -127,7 +127,7 @@
           type="text"
           bind:value={searchQuery}
           placeholder="Search by project name..."
-          class="w-full bg-bg-warm border border-dark-charcoal/15 pl-10 pr-4 py-2 rounded-xl text-xs font-semibold text-dark-charcoal focus:outline-none focus:border-accent-orange orange-glow-border transition-all"
+          class="w-full bg-bg-warm border border-dark-charcoal/15 pl-10 pr-4 py-2 rounded-xl text-xs font-semibold text-dark-charcoal focus:outline-none focus:border-accent-purple purple-glow-border transition-all"
         />
       </div>
 
@@ -136,7 +136,7 @@
         {#each ['All', 'Critical', 'High/Medium', 'Clear'] as filter}
           <button
             onclick={() => riskFilter = filter}
-            class="px-3.5 py-1.5 rounded-lg text-[10px] font-extrabold transition-all cursor-pointer uppercase tracking-wider {riskFilter === filter ? 'bg-accent-orange text-bg-warm' : 'text-dark-charcoal/60 hover:text-dark-charcoal'}"
+            class="px-3.5 py-1.5 rounded-lg text-[10px] font-extrabold transition-all cursor-pointer uppercase tracking-wider {riskFilter === filter ? 'bg-accent-purple text-bg-warm' : 'text-dark-charcoal/60 hover:text-dark-charcoal'}"
           >
             {filter}
           </button>
@@ -154,34 +154,34 @@
                 type="checkbox"
                 checked={processedScans().length > 0 && selectedScanIds.length === processedScans().length}
                 onchange={handleSelectAll}
-                class="rounded border-dark-charcoal/20 text-accent-orange focus:ring-accent-orange w-4 h-4 cursor-pointer accent-accent-orange"
+                class="rounded border-dark-charcoal/20 text-accent-purple focus:ring-accent-purple w-4 h-4 cursor-pointer accent-accent-purple"
               />
             </th>
-            <th onclick={() => toggleSort('projectName')} class="py-3 px-4 cursor-pointer hover:text-accent-orange transition-colors">
+            <th onclick={() => toggleSort('projectName')} class="py-3 px-4 cursor-pointer hover:text-accent-purple transition-colors">
               <div class="flex items-center gap-1">
                 Project Name
                 {#if sortBy === 'projectName'}{sortOrder === 'asc' ? '↑' : '↓'}{/if}
               </div>
             </th>
-            <th onclick={() => toggleSort('date')} class="py-3 px-4 cursor-pointer hover:text-accent-orange transition-colors w-32">
+            <th onclick={() => toggleSort('date')} class="py-3 px-4 cursor-pointer hover:text-accent-purple transition-colors w-32">
               <div class="flex items-center gap-1">
                 Scan Date
                 {#if sortBy === 'date'}{sortOrder === 'asc' ? '↑' : '↓'}{/if}
               </div>
             </th>
-            <th onclick={() => toggleSort('filesScanned')} class="py-3 px-4 text-center cursor-pointer hover:text-accent-orange transition-colors w-24">
+            <th onclick={() => toggleSort('filesScanned')} class="py-3 px-4 text-center cursor-pointer hover:text-accent-purple transition-colors w-24">
               <div class="flex items-center justify-center gap-1">
                 Files
                 {#if sortBy === 'filesScanned'}{sortOrder === 'asc' ? '↑' : '↓'}{/if}
               </div>
             </th>
-            <th onclick={() => toggleSort('secretsFound')} class="py-3 px-4 text-center cursor-pointer hover:text-accent-orange transition-colors w-28">
+            <th onclick={() => toggleSort('secretsFound')} class="py-3 px-4 text-center cursor-pointer hover:text-accent-purple transition-colors w-28">
               <div class="flex items-center justify-center gap-1">
                 Secrets Found
                 {#if sortBy === 'secretsFound'}{sortOrder === 'asc' ? '↑' : '↓'}{/if}
               </div>
             </th>
-            <th onclick={() => toggleSort('riskScore')} class="py-3 px-4 cursor-pointer hover:text-accent-orange transition-colors w-32">
+            <th onclick={() => toggleSort('riskScore')} class="py-3 px-4 cursor-pointer hover:text-accent-purple transition-colors w-32">
               <div class="flex items-center gap-1">
                 Risk Rating
                 {#if sortBy === 'riskScore'}{sortOrder === 'asc' ? '↑' : '↓'}{/if}
@@ -199,7 +199,7 @@
                     type="checkbox"
                     checked={selectedScanIds.includes(item.id)}
                     onchange={() => toggleSelect(item.id)}
-                    class="rounded border-dark-charcoal/20 text-accent-orange focus:ring-accent-orange w-4 h-4 cursor-pointer accent-accent-orange"
+                    class="rounded border-dark-charcoal/20 text-accent-purple focus:ring-accent-purple w-4 h-4 cursor-pointer accent-accent-purple"
                   />
                 </td>
                 <td class="py-3.5 px-4 font-bold cursor-pointer" onclick={() => handleInspect(item.id)}>
@@ -221,7 +221,7 @@
                   <div class="flex items-center justify-end gap-2">
                     <button
                       onclick={() => handleInspect(item.id)}
-                      class="text-xs font-bold bg-bg-warm border border-dark-charcoal/20 px-2.5 py-1 rounded-md text-dark-charcoal hover:bg-accent-orange hover:text-bg-warm transition-colors cursor-pointer"
+                      class="text-xs font-bold bg-bg-warm border border-dark-charcoal/20 px-2.5 py-1 rounded-md text-dark-charcoal hover:bg-accent-purple hover:text-bg-warm transition-colors cursor-pointer"
                     >
                       Load
                     </button>

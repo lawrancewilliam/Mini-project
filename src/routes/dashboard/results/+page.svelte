@@ -150,7 +150,7 @@
             type="text"
             bind:value={searchQuery}
             placeholder="Search by file path or secret type..."
-            class="w-full bg-bg-warm border border-dark-charcoal/15 pl-10 pr-4 py-2.5 rounded-xl text-sm font-semibold text-dark-charcoal focus:outline-none focus:border-accent-orange orange-glow-border transition-all"
+            class="w-full bg-bg-warm border border-dark-charcoal/15 pl-10 pr-4 py-2.5 rounded-xl text-sm font-semibold text-dark-charcoal focus:outline-none focus:border-accent-purple purple-glow-border transition-all"
           />
         </div>
 
@@ -161,7 +161,7 @@
             {#each ['All', 'Critical', 'High', 'Medium', 'Low'] as sev}
               <button
                 onclick={() => selectedSeverity = sev}
-                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer {selectedSeverity === sev ? 'bg-accent-orange text-bg-warm shadow-sm' : 'text-dark-charcoal/60 hover:text-dark-charcoal'}"
+                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer {selectedSeverity === sev ? 'bg-accent-purple text-bg-warm shadow-sm' : 'text-dark-charcoal/60 hover:text-dark-charcoal'}"
               >
                 {sev}
               </button>
@@ -171,7 +171,7 @@
           <!-- Status Filter -->
           <select
             bind:value={selectedStatus}
-            class="bg-bg-warm border border-accent-orange/30 px-4 py-2 rounded-2xl text-xs font-bold text-dark-charcoal focus:outline-none focus:border-accent-orange focus:ring-2 focus:ring-accent-orange/20 transition-all orange-glow cursor-pointer"
+            class="bg-bg-warm border border-accent-purple/30 px-4 py-2 rounded-2xl text-xs font-bold text-dark-charcoal focus:outline-none focus:border-accent-purple focus:ring-2 focus:ring-accent-purple/20 transition-all purple-glow cursor-pointer"
           >
             <option value="All">All Statuses</option>
             <option value="Active">Active</option>
@@ -186,25 +186,25 @@
         <table class="w-full border-collapse text-left">
           <thead>
             <tr class="border-b border-dark-charcoal/10 text-xs font-bold text-dark-charcoal/50 uppercase tracking-wider select-none">
-              <th onclick={() => toggleSort('file')} class="py-3 px-4 cursor-pointer hover:text-accent-orange transition-colors">
+              <th onclick={() => toggleSort('file')} class="py-3 px-4 cursor-pointer hover:text-accent-purple transition-colors">
                 <div class="flex items-center gap-1">
                   File Location
                   {#if sortField === 'file'}{sortOrder === 'asc' ? '↑' : '↓'}{/if}
                 </div>
               </th>
-              <th onclick={() => toggleSort('line')} class="py-3 px-4 text-center cursor-pointer hover:text-accent-orange transition-colors w-20">
+              <th onclick={() => toggleSort('line')} class="py-3 px-4 text-center cursor-pointer hover:text-accent-purple transition-colors w-20">
                 <div class="flex items-center justify-center gap-1">
                   Line
                   {#if sortField === 'line'}{sortOrder === 'asc' ? '↑' : '↓'}{/if}
                 </div>
               </th>
-              <th onclick={() => toggleSort('secretType')} class="py-3 px-4 cursor-pointer hover:text-accent-orange transition-colors">
+              <th onclick={() => toggleSort('secretType')} class="py-3 px-4 cursor-pointer hover:text-accent-purple transition-colors">
                 <div class="flex items-center gap-1">
                   Secret Type
                   {#if sortField === 'secretType'}{sortOrder === 'asc' ? '↑' : '↓'}{/if}
                 </div>
               </th>
-              <th onclick={() => toggleSort('severity')} class="py-3 px-4 cursor-pointer hover:text-accent-orange transition-colors w-28">
+              <th onclick={() => toggleSort('severity')} class="py-3 px-4 cursor-pointer hover:text-accent-purple transition-colors w-28">
                 <div class="flex items-center gap-1">
                   Severity
                   {#if sortField === 'severity'}{sortOrder === 'asc' ? '↑' : '↓'}{/if}
@@ -233,7 +233,7 @@
                     <select
                       value={finding.status}
                       onchange={(e) => finding.status = e.target.value}
-                      class="bg-bg-warm border border-accent-orange/30 rounded-xl px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase focus:outline-none focus:border-accent-orange focus:ring-2 focus:ring-accent-orange/20 transition-all cursor-pointer {getStatusClass(finding.status)}"
+                      class="bg-bg-warm border border-accent-purple/30 rounded-xl px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase focus:outline-none focus:border-accent-purple focus:ring-2 focus:ring-accent-purple/20 transition-all cursor-pointer {getStatusClass(finding.status)}"
                     >
                       <option value="Active">Active</option>
                       <option value="Revoked">Revoked</option>
@@ -243,7 +243,7 @@
                   <td class="py-3.5 px-4 text-right" onclick={(e) => e.stopPropagation()}>
                     <button
                       onclick={() => handleRowClick(finding.id)}
-                      class="text-xs font-bold bg-bg-warm border border-dark-charcoal/20 px-3 py-1.5 rounded-lg text-dark-charcoal hover:bg-accent-orange hover:text-bg-warm transition-all cursor-pointer"
+                      class="text-xs font-bold bg-bg-warm border border-dark-charcoal/20 px-3 py-1.5 rounded-lg text-dark-charcoal hover:bg-accent-purple hover:text-bg-warm transition-all cursor-pointer"
                     >
                       AI Check
                     </button>

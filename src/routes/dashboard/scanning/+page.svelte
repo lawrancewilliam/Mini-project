@@ -76,11 +76,11 @@
     
     <!-- Top Progress Indicator -->
     <div class="text-center mb-8">
-      <div class="inline-flex items-center gap-2 bg-accent-orange/15 text-accent-orange px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider mb-4">
+      <div class="inline-flex items-center gap-2 bg-accent-purple/15 text-accent-purple px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider mb-4">
         {#if scan.status === 'scanning'}
           <span class="flex h-2.5 w-2.5 relative">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-orange opacity-75"></span>
-            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-accent-orange"></span>
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-purple opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-accent-purple"></span>
           </span>
           SCAN RUNNING
         {:else}
@@ -91,7 +91,7 @@
       
       <h3 class="text-2xl font-bold font-display text-dark-charcoal">
         {#if scan.status === 'scanning'}
-          Analyzing Project: <span class="text-accent-orange">{scan.project?.projectName}</span>
+          Analyzing Project: <span class="text-accent-purple">{scan.project?.projectName}</span>
         {:else}
           Analysis Successful!
         {/if}
@@ -107,7 +107,7 @@
       </div>
       <div class="w-full bg-bg-warm rounded-full h-4 overflow-hidden border border-dark-charcoal/10 relative">
         <div
-          class="bg-accent-orange h-full rounded-full transition-all duration-300 relative"
+          class="bg-accent-purple h-full rounded-full transition-all duration-300 relative"
           style="width: {scan.progress}%"
         >
           <!-- Shiny flow bar -->
@@ -133,7 +133,7 @@
         {#each terminalLogs as log}
           <div class="leading-relaxed">
             <span class="text-bg-warm/40">[{log.time}]</span>
-            <span class={log.text.includes('[WARN]') ? 'text-accent-orange font-bold' : log.text.includes('[SYSTEM]') ? 'text-cyan-400 font-bold' : 'text-bg-warm/85'}>
+            <span class={log.text.includes('[WARN]') ? 'text-accent-purple font-bold' : log.text.includes('[SYSTEM]') ? 'text-cyan-400 font-bold' : 'text-bg-warm/85'}>
               {log.text}
             </span>
           </div>
@@ -141,7 +141,7 @@
         
         {#if scan.status === 'scanning'}
           <div class="flex items-center gap-1 mt-1">
-            <span class="w-1.5 h-3.5 bg-accent-orange animate-pulse"></span>
+            <span class="w-1.5 h-3.5 bg-accent-purple animate-pulse"></span>
             <span class="text-[10px] text-bg-warm/50 italic font-semibold">awaiting next console response...</span>
           </div>
         {/if}
@@ -153,7 +153,7 @@
       <div class="mt-8 pt-6 border-t border-dark-charcoal/10 text-center animate-in fade-in slide-in-from-bottom-4 duration-300">
         <button
           onclick={() => { appState.resetActiveScan(); goto('/dashboard/results'); }}
-          class="inline-flex items-center gap-2 bg-accent-orange text-bg-warm font-extrabold px-8 py-3.5 rounded-xl hover:bg-dark-charcoal hover:text-bg-warm transition-all duration-300 shadow-md orange-glow cursor-pointer"
+          class="inline-flex items-center gap-2 bg-accent-purple text-bg-warm font-extrabold px-8 py-3.5 rounded-xl hover:bg-dark-charcoal hover:text-bg-warm transition-all duration-300 shadow-md purple-glow cursor-pointer"
         >
           View Detections
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
