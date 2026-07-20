@@ -46,9 +46,32 @@
   }
 
   function getConfidenceColor(score) {
-    if (score >= 90) return 'bg-red-500';
-    if (score >= 60) return 'bg-orange-500';
+    if (score >= 80) return 'bg-red-500';
+    if (score >= 55) return 'bg-orange-500';
+    if (score >= 30) return 'bg-yellow-500';
     return 'bg-blue-500';
+  }
+
+  function getSignalBarColor(score) {
+    if (score >= 0.7) return 'bg-red-500';
+    if (score >= 0.4) return 'bg-orange-500';
+    return 'bg-emerald-500';
+  }
+
+  function getSignalLabel(score) {
+    if (score >= 0.7) return 'High Risk';
+    if (score >= 0.4) return 'Medium';
+    return 'Low Risk';
+  }
+
+  function getVerdictColor(decision) {
+    switch (decision) {
+      case 'Leak Confirmed': return 'bg-red-100 text-red-600 border-red-200';
+      case 'Suspicious': return 'bg-orange-100 text-orange-600 border-orange-200';
+      case 'Test Data': return 'bg-yellow-100 text-yellow-600 border-yellow-200';
+      case 'False Positive': return 'bg-emerald-100 text-emerald-600 border-emerald-200';
+      default: return 'bg-gray-100 text-gray-600 border-gray-200';
+    }
   }
 
   let copySuccess = $state(false);
@@ -99,7 +122,7 @@
               
               <div class="flex items-center gap-2">
                 <span class="text-xs font-bold text-dark-charcoal/60">AI Verdict:</span>
-                <span class="bg-red-100 text-red-600 border border-red-200 px-3 py-1 rounded-xl text-xs font-bold uppercase tracking-wider">
+                <span class="px-3 py-1 rounded-xl text-xs font-bold uppercase tracking-wider {getVerdictColor(selectedFinding().decision)}">
                   {selectedFinding().decision}
                 </span>
               </div>
@@ -130,12 +153,15 @@
             <div class="bg-card-warm border border-dark-charcoal/10 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
               <div>
                 <h4 class="text-sm font-bold text-dark-charcoal uppercase tracking-wider">AI Confidence</h4>
-                <p class="text-xs text-dark-charcoal/60 mt-0.5">Calculated model matching probability</p>
+                <p class="text-xs text-dark-charcoal/60 mt-0.5">Multi-signal analysis score</p>
                 
                 <div class="mt-6 text-center">
                   <div class="text-5xl font-extrabold font-display text-dark-charcoal">{selectedFinding().confidence}%</div>
                   <div class="w-full bg-bg-warm rounded-full h-2 mt-4 overflow-hidden border border-dark-charcoal/10">
-                    <div class="h-2 rounded-full {getConfidenceColor(selectedFinding().confidence)}" style="width: {selectedFinding().confidence}%"></div>
+                    <div class="h-2 rounded-full {getConfidenceColor(selectedFinding().confidence)} transition-all duration-500" style="width: {selectedFinding().confidence}%"></div>
+                  </div>
+                  <div class="mt-2 text-xs font-bold uppercase tracking-wider {selectedFinding().confidence >= 80 ? 'text-red-500' : selectedFinding().confidence >= 55 ? 'text-orange-500' : selectedFinding().confidence >= 30 ? 'text-yellow-500' : 'text-emerald-500'}">
+                    {selectedFinding().confidence >= 80 ? 'High Confidence' : selectedFinding().confidence >= 55 ? 'Medium Confidence' : selectedFinding().confidence >= 30 ? 'Low Confidence' : 'Very Low Confidence'}
                   </div>
                 </div>
               </div>
@@ -149,7 +175,7 @@
             <div class="bg-card-warm border border-dark-charcoal/10 rounded-3xl p-6 shadow-sm md:col-span-2 flex flex-col justify-between">
               <div>
                 <h4 class="text-sm font-bold text-dark-charcoal uppercase tracking-wider">AI Analysis Reason</h4>
-                <p class="text-xs text-dark-charcoal/60 mt-0.5">Logic behind this risk assessment decision</p>
+                <p class="text-xs text-dark-charcoal/60 mt-0.5">Multi-signal context evaluation result</p>
                 
                 <p class="text-sm text-dark-charcoal/80 font-semibold mt-4 leading-relaxed">
                   {selectedFinding().reason}
@@ -157,10 +183,43 @@
               </div>
               
               <div class="text-[10px] text-accent-purple font-bold uppercase tracking-wider mt-4">
-                Verified: Heuristic signature matching & AST analysis check
+                Context Engine v2 — 6 signals analyzed
               </div>
             </div>
           </div>
+
+          <!-- Signal Analysis Breakdown -->
+          {#if selectedFinding().signalDetails}
+          <div class="bg-card-warm border border-dark-charcoal/10 rounded-3xl p-6 shadow-sm">
+            <div class="flex items-center justify-between border-b border-dark-charcoal/10 pb-4 mb-5">
+              <div>
+                <h4 class="text-base font-bold font-display text-dark-charcoal">Signal Analysis Breakdown</h4>
+                <p class="text-xs text-dark-charcoal/60 mt-0.5">Each signal analyzed from surrounding code context</p>
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              {#each selectedFinding().signalDetails as signal}
+                <div>
+                  <div class="flex items-center justify-between mb-1.5">
+                    <div class="flex items-center gap-2">
+                      <span class="w-2 h-2 rounded-full {getSignalBarColor(signal.score)}"></span>
+                      <span class="text-sm font-bold text-dark-charcoal">{signal.name}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="text-xs font-bold {getSignalBarColor(signal.score).replace('bg-', 'text-').replace('-500', '-600')}">{getSignalLabel(signal.score)}</span>
+                      <span class="text-xs font-mono font-bold text-dark-charcoal/50 w-8 text-right">{Math.round(signal.score * 100)}%</span>
+                    </div>
+                  </div>
+                  <div class="w-full bg-bg-warm rounded-full h-2 overflow-hidden border border-dark-charcoal/10">
+                    <div class="h-2 rounded-full {getSignalBarColor(signal.score)} transition-all duration-500" style="width: {signal.score * 100}%"></div>
+                  </div>
+                  <p class="text-[11px] text-dark-charcoal/60 mt-1 font-medium">{signal.evidence}</p>
+                </div>
+              {/each}
+            </div>
+          </div>
+          {/if}
 
           <!-- Remediation card -->
           <div class="bg-card-warm border border-dark-charcoal/10 rounded-3xl p-6 shadow-sm space-y-4">

@@ -1,5 +1,6 @@
 import { browser } from '$app/environment';
 import JSZip from 'jszip';
+import { analyzeContext, analyzeWithOllama, VERDICTS } from '$lib/ai-engine.js';
 
 // Secret Detection Engine predefined patterns (Module 3 + Module 5 specs)
 const RULES = [
@@ -524,8 +525,16 @@ class AppState {
         status: 'Active',
         codeContext: 'const DATABASE_URL = "postgresql://db_user:password_99@prod-db.quantum.io:5432/main";',
         decision: 'Leak Confirmed',
-        confidence: 98,
-        reason: 'Hardcoded connection string containing passwords discovered in database configuration source.',
+        confidence: 94,
+        reason: 'High-confidence detection: variable naming, value entropy signals strongly indicate this is a real, active credential exposed in source code.',
+        signalDetails: [
+          { name: 'Variable Naming', score: 0.9, evidence: 'Variable naming pattern suggests real credential usage' },
+          { name: 'Value Entropy', score: 0.82, evidence: 'High entropy (4.7) suggests real credential' },
+          { name: 'Comment Context', score: 0.5, evidence: 'No relevant comments nearby' },
+          { name: 'File Context', score: 0.55, evidence: 'File is in configuration directory' },
+          { name: 'Code Structure', score: 0.65, evidence: 'Finding is inside a function body' },
+          { name: 'Assignment Pattern', score: 0.85, evidence: 'Value is hardcoded directly in source (insecure pattern)' }
+        ],
         fix: 'Inject connection strings dynamically using process.env.DATABASE_URL.',
         bestPractice: 'Manage sensitive credentials using service binds or secret managers.'
       }
@@ -547,8 +556,16 @@ class AppState {
         status: 'Active',
         codeContext: 'const GITHUB_CLIENT_SECRET = "ghs_89d381ad7f23cba922384a8d023bd7";',
         decision: 'Leak Confirmed',
-        confidence: 94,
-        reason: 'OAuth client credentials detected inside user identity verification middleware.',
+        confidence: 91,
+        reason: 'High-confidence detection: variable naming, file context signals strongly indicate this is a real, active credential exposed in source code.',
+        signalDetails: [
+          { name: 'Variable Naming', score: 0.95, evidence: 'Variable naming pattern suggests real credential usage' },
+          { name: 'Value Entropy', score: 0.75, evidence: 'Mixed character types increase credential likelihood' },
+          { name: 'Comment Context', score: 0.5, evidence: 'No relevant comments nearby' },
+          { name: 'File Context', score: 0.75, evidence: 'File is in production source directory' },
+          { name: 'Code Structure', score: 0.6, evidence: 'Finding is inside a function body' },
+          { name: 'Assignment Pattern', score: 0.8, evidence: 'Value is hardcoded directly in source (insecure pattern)' }
+        ],
         fix: 'Configure environment secret keys or fetch from a secure vault.',
         bestPractice: 'Rotate client IDs and client secrets periodically.'
       });
@@ -667,40 +684,55 @@ class AppState {
 
                 const fullSurroundingText = lines.slice(startIdx, endIdx + 1).join('\n');
 
-                // Determine AI verdict heuristics (Module 4 & Module 8 specifications)
-                let decision = 'Leak Confirmed';
-                let confidence = 92 + Math.floor(Math.random() * 8);
-                let reason = `Regex matches standard metadata signatures for ${rule.name}. Transmitted raw plaintext secrets committed directly within source tree code variables.`;
-
-                const isFakeKeywords = /example|test|dummy|mock|placeholder|template|xxxx|aws_key|secret_key|sample/i.test(fullSurroundingText) || 
-                                      /SuperSecurePassword/i.test(fullSurroundingText) ||
-                                      /T00000000/i.test(fullSurroundingText);
-                const isComment = /^\s*(\/\/|#|\/\*|\*)/.test(line);
-
-                if (isFakeKeywords || isComment) {
-                  decision = isComment ? 'False Positive' : 'Test Data';
-                  confidence = 80 + Math.floor(Math.random() * 15);
-                  reason = isComment ? 
-                    `Classified as a False Positive: The potential secret resides inside commented-out line, which suggests it is inactive or intended as an reference note.` : 
-                    `Classified as Test Data: The code context contains mock keywords ('example', 'mock', 'test'), validating this value as isolated config templates.`;
+                // Determine AI verdict using multi-signal engine + optional Ollama LLM (Module 4)
+                const matchedValue = match[0].length > 100 ? match[0].substring(0, 100) : match[0];
+                const shouldUseOllama = rule.weight >= 8;
+                let aiResult;
+                if (shouldUseOllama) {
+                  aiResult = await analyzeWithOllama({
+                    filePath: relativePath,
+                    matchedValue,
+                    lineContent: line,
+                    allLines: lines,
+                    lineIndex: i,
+                    secretType: rule.name
+                  });
+                } else {
+                  aiResult = analyzeContext({
+                    filePath: relativePath,
+                    matchedValue,
+                    lineContent: line,
+                    allLines: lines,
+                    lineIndex: i,
+                    secretType: rule.name
+                  });
                 }
+                let decision = aiResult.decision;
+                let confidence = aiResult.confidence;
+                let reason = aiResult.reason;
 
                 let severity = rule.severity;
                 let activeWeight = rule.weight;
-                
-                if (decision !== 'Leak Confirmed') {
+
+                if (decision === VERDICTS.FALSE_POSITIVE) {
                   activeWeight = 0;
                   severity = 'Low';
+                } else if (decision === VERDICTS.TEST_DATA) {
+                  activeWeight = Math.round(rule.weight * 0.2);
+                  severity = 'Low';
+                } else if (decision === VERDICTS.SUSPICIOUS) {
+                  activeWeight = Math.round(rule.weight * 0.6);
+                  severity = severity === 'Critical' ? 'High' : severity;
                 }
 
-                if (decision === 'Leak Confirmed') {
+                if (decision === VERDICTS.LEAK_CONFIRMED || decision === VERDICTS.SUSPICIOUS) {
                   totalRatingWeight += activeWeight;
-                  if (rule.severity === 'Critical') criticalCount++;
-                  else if (rule.severity === 'High') highCount++;
-                  else if (rule.severity === 'Medium') mediumCount++;
-                  else if (rule.severity === 'Low') lowCount++;
+                  if (severity === 'Critical') criticalCount++;
+                  else if (severity === 'High') highCount++;
+                  else if (severity === 'Medium') mediumCount++;
+                  else if (severity === 'Low') lowCount++;
                 } else {
-                  lowCount++; // Move false positives to low severity categorization
+                  lowCount++;
                 }
 
                 findings.push({
@@ -709,11 +741,12 @@ class AppState {
                   line: i + 1,
                   secretType: rule.name,
                   severity: severity,
-                  status: decision === 'Leak Confirmed' ? 'Active' : 'False Positive',
+                  status: decision === 'Leak Confirmed' ? 'Active' : decision === 'Suspicious' ? 'Active' : 'False Positive',
                   codeContext: line.trim(),
                   decision: decision,
                   confidence: confidence,
                   reason: reason,
+                  signalDetails: aiResult.signalDetails,
                   fix: rule.fix,
                   bestPractice: rule.bestPractice
                 });
