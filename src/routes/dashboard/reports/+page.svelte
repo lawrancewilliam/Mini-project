@@ -1,6 +1,7 @@
 <script>
   import { appState } from '$lib/state.svelte';
   import { browser } from '$app/environment';
+  import { maskPII } from '$lib/state.svelte.js';
   import jsPDF from 'jspdf';
   import html2canvas from 'html2canvas';
 
@@ -48,7 +49,9 @@
       </tr>
     `).join('');
 
-    const detailsSection = project.findings.map((f, i) => `
+const detailsSection = project.findings.map((f, i) => {
+      const maskedCode = maskPII(f.codeContext, f.secretType);
+      return `
       <div style="background: #1a1a1a; border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid #2a2a2a;">
         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
           <span style="width: 32px; height: 32px; background: #7C3AED; color: #ffffff; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700;">${i + 1}</span>
@@ -58,8 +61,8 @@
           </div>
           <span style="margin-left: auto; padding: 3px 10px; border-radius: 999px; font-size: 9px; font-weight: 700; text-transform: uppercase; background: ${f.severity === 'Critical' ? '#FEE2E2' : f.severity === 'High' ? '#FFF7ED' : f.severity === 'Medium' ? '#FEFCE8' : '#EFF6FF'}; color: ${f.severity === 'Critical' ? '#DC2626' : f.severity === 'High' ? '#EA580C' : f.severity === 'Medium' ? '#CA8A04' : '#2563EB'};">${f.severity}</span>
         </div>
-        <div style="background: #0a0a0a; border-radius: 8px; padding: 12px; font-family: monospace; font-size: 10px; color: #aaaaaa; margin-bottom: 12px; border: 1px solid #2a2a2a;">
-          <span style="color: #7C3AED;">>> </span>${f.codeContext}
+        <div style="background: #0a0a0a; border-radius: 8px; padding: 12px; font-family: monospace; font-size: 10px; color: #aaaaaa; margin-bottom: 12px; border: 1px solid #2a2a2a; white-space: pre-wrap;">
+          <span style="color: #7C3AED;">>> </span>${maskedCode}
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
           <div>
@@ -73,7 +76,8 @@
           </div>
         </div>
       </div>
-    `).join('');
+      `;
+    }).join('');
 
     return `<!DOCTYPE html>
 <html>

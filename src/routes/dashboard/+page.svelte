@@ -1,6 +1,10 @@
 <script>
   import { appState } from '$lib/state.svelte';
   import { goto } from '$app/navigation';
+  import Chart from 'chart.js/auto';
+  
+  let severityChart = $state(null);
+  let typesChart = $state(null);
 
   // Gather global widgets data
   const totalProjects = $derived(appState.scans.length);
@@ -13,7 +17,7 @@
   
   // Gauge details
   const radius = 50;
-  const circumference = 2 * Math.PI * radius; // 314.159
+  const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = $derived(circumference - (riskScore / 100) * circumference);
 
   // Group current project secrets by type
@@ -26,6 +30,31 @@
     return Object.entries(counts).map(([type, count]) => ({ type, count }));
   });
 
+  const severityChartData = $derived(() => {
+    if (!project) return { labels: [], data: [] };
+    return {
+      labels: ['Critical', 'High', 'Medium', 'Low'],
+      data: [project.criticalCount, project.highCount, project.mediumCount, project.lowCount],
+      backgroundColor: ['#EF4444', '#F97316', '#EAB308', '#22C55E']
+    };
+  });
+
+  const secretTypesChartData = $derived(() => {
+    if (!project || !project.findings || project.findings.length === 0) return { labels: [], data: [], backgroundColor: [] };
+    const counts = {};
+    project.findings.forEach(f => {
+      counts[f.secretType] = (counts[f.secretType] || 0) + 1;
+    });
+    const labels = Object.keys(counts);
+    const data = Object.values(counts);
+    const colors = ['#EF4444', '#F97316', '#EAB308', '#8B5CF6', '#F472B6', '#60A5FA', '#34D399', '#FBBF24'];
+    return {
+      labels,
+      data,
+      backgroundColor: labels.map((_, i) => colors[i % colors.length])
+    };
+  });
+
   function getRiskBadgeClass(score) {
     if (score >= 75) return 'bg-red-100 text-red-600 border-red-200';
     if (score >= 40) return 'bg-yellow-100 text-yellow-600 border-yellow-200';
@@ -35,10 +64,59 @@
 
   function getRiskText(score) {
     if (score >= 75) return 'CRITICAL';
-    if (score >= 40) return 'MEDIUM / HIGH';
+    if (score >= 40) return 'HIGH / MEDIUM';
     if (score > 0) return 'LOW RISK';
     return 'SECURE';
   }
+
+  function renderSeverityChart() {
+    if (!severityChart || !project) return;
+    const ctx = severityChart;
+    if (window.__severityChartInstance) {
+      window.__severityChartInstance.destroy();
+    }
+    window.__severityChartInstance = new Chart(ctx, {
+      type: 'pie',
+      data: severityChartData(),
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '#6B7280' } },
+          tooltip: { backgroundColor: '#1a1a1a', titleColor: '#fff', bodyColor: '#ccc' }
+        }
+      }
+    });
+  }
+
+  function renderTypesChart() {
+    if (!typesChart || !project) return;
+    const ctx = typesChart;
+    if (window.__typesChartInstance) {
+      window.__typesChartInstance.destroy();
+    }
+    window.__typesChartInstance = new Chart(ctx, {
+      type: 'doughnut',
+      data: secretTypesChartData(),
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '#6B7280' } },
+          tooltip: { backgroundColor: '#1a1a1a', titleColor: '#fff', bodyColor: '#ccc' }
+        }
+      }
+    });
+  }
+
+  $effect(() => {
+    if (project) {
+      setTimeout(() => {
+        renderSeverityChart();
+        renderTypesChart();
+      }, 100);
+    }
+  });
 </script>
 
 <div class="space-y-8">
@@ -157,91 +235,25 @@
       </div>
 
       <!-- Severity Distribution -->
-      <div class="bg-card-warm border border-dark-charcoal/10 rounded-3xl p-6 flex flex-col justify-between shadow-sm">
-        <div>
+      <div class="bg-card-warm border border-dark-charcoal/10 rounded-3xl p-6 flex flex-col shadow-sm">
+        <div class="mb-4">
           <h3 class="text-lg font-bold font-display text-dark-charcoal">Severity Distribution</h3>
-          <p class="text-xs text-dark-charcoal/60 mt-1">Number of leaks classified by impact</p>
-          
-          <div class="mt-6 space-y-4">
-            <!-- Critical -->
-            <div>
-              <div class="flex items-center justify-between text-xs font-bold mb-1.5">
-                <span class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-red-500"></span>Critical</span>
-                <span>{project.criticalCount}</span>
-              </div>
-              <div class="w-full bg-bg-warm rounded-full h-2">
-                <div class="bg-red-500 h-2 rounded-full transition-all duration-500" style="width: {project.secretsFound > 0 ? (project.criticalCount / project.secretsFound) * 100 : 0}%"></div>
-              </div>
-            </div>
-
-            <!-- High -->
-            <div>
-              <div class="flex items-center justify-between text-xs font-bold mb-1.5">
-                <span class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-orange-500"></span>High</span>
-                <span>{project.highCount}</span>
-              </div>
-              <div class="w-full bg-bg-warm rounded-full h-2">
-                <div class="bg-orange-500 h-2 rounded-full transition-all duration-500" style="width: {project.secretsFound > 0 ? (project.highCount / project.secretsFound) * 100 : 0}%"></div>
-              </div>
-            </div>
-
-            <!-- Medium -->
-            <div>
-              <div class="flex items-center justify-between text-xs font-bold mb-1.5">
-                <span class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-yellow-500"></span>Medium</span>
-                <span>{project.mediumCount}</span>
-              </div>
-              <div class="w-full bg-bg-warm rounded-full h-2">
-                <div class="bg-yellow-500 h-2 rounded-full transition-all duration-500" style="width: {project.secretsFound > 0 ? (project.mediumCount / project.secretsFound) * 100 : 0}%"></div>
-              </div>
-            </div>
-
-            <!-- Low -->
-            <div>
-              <div class="flex items-center justify-between text-xs font-bold mb-1.5">
-                <span class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-blue-500"></span>Low</span>
-                <span>{project.lowCount}</span>
-              </div>
-              <div class="w-full bg-bg-warm rounded-full h-2">
-                <div class="bg-blue-500 h-2 rounded-full transition-all duration-500" style="width: {project.secretsFound > 0 ? (project.lowCount / project.secretsFound) * 100 : 0}%"></div>
-              </div>
-            </div>
-          </div>
+          <p class="text-xs text-dark-charcoal/60 mt-1">Pie chart of findings by severity level</p>
         </div>
-
-        <div class="mt-6 pt-6 border-t border-dark-charcoal/10 flex items-center justify-between">
-          <div class="text-xs font-extrabold text-dark-charcoal">Total Findings:</div>
-          <div class="text-sm font-extrabold text-accent-purple">{project.secretsFound} Secrets</div>
+        <div class="h-64">
+          <canvas bind:this={severityChart}></canvas>
         </div>
       </div>
 
       <!-- Secret Types Breakdown -->
-      <div class="bg-card-warm border border-dark-charcoal/10 rounded-3xl p-6 flex flex-col justify-between shadow-sm">
-        <div>
-          <h3 class="text-lg font-bold font-display text-dark-charcoal">Secret Types</h3>
-          <p class="text-xs text-dark-charcoal/60 mt-1">Identified signature formats</p>
-          
-          <div class="mt-6 space-y-4">
-            {#if secretTypeCounts().length > 0}
-              {#each secretTypeCounts() as item}
-                <div>
-                  <div class="flex items-center justify-between text-xs font-bold mb-1.5">
-                    <span>{item.type}</span>
-                    <span>{item.count}</span>
-                  </div>
-                  <div class="w-full bg-bg-warm rounded-full h-2">
-                    <div class="bg-accent-purple h-2 rounded-full transition-all duration-500" style="width: {project.secretsFound > 0 ? (item.count / project.secretsFound) * 100 : 0}%"></div>
-                  </div>
-                </div>
-              {/each}
-            {:else}
-              <div class="text-center py-10 text-xs font-bold text-dark-charcoal/40">
-                No secrets detected in this target codebase.
-              </div>
-            {/if}
-          </div>
+      <div class="bg-card-warm border border-dark-charcoal/10 rounded-3xl p-6 flex flex-col shadow-sm">
+        <div class="mb-4">
+          <h3 class="text-lg font-bold font-display text-dark-charcoal">Secret Types Breakdown</h3>
+          <p class="text-xs text-dark-charcoal/60 mt-1">Doughnut chart of identified secret types</p>
         </div>
-
+        <div class="h-64">
+          <canvas bind:this={typesChart}></canvas>
+        </div>
         <div class="mt-6 pt-6 border-t border-dark-charcoal/10 text-center">
           <a href="/dashboard/results" class="text-xs font-bold text-accent-purple hover:underline inline-flex items-center gap-1">
             View full details table

@@ -1,5 +1,5 @@
 <script>
-  import { appState } from '$lib/state.svelte';
+  import { appState, maskPII } from '$lib/state.svelte';
   import { onMount } from 'svelte';
   import { browser } from '$app/environment';
 
@@ -10,6 +10,15 @@
   const selectedFinding = $derived(() => {
     if (!project || !project.findings || project.findings.length === 0) return null;
     return project.findings.find(f => f.id === selectedFindingId) || project.findings[0];
+  });
+
+  const maskedFinding = $derived(() => {
+    if (!selectedFinding()) return null;
+    const f = selectedFinding();
+    return {
+      ...f,
+      codeContext: maskPII(f.codeContext, f.secretType)
+    };
   });
 
   onMount(() => {
@@ -111,19 +120,19 @@
 
       <!-- Right Panel: AI Deep Analysis Detail -->
       <div class="lg:col-span-3 space-y-6">
-        {#if selectedFinding()}
+        {#if maskedFinding()}
           <!-- Top summary -->
           <div class="bg-card-warm border border-dark-charcoal/10 rounded-3xl p-6 shadow-sm">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-dark-charcoal/10 pb-5">
               <div>
-                <span class="text-xs font-bold text-dark-charcoal/50 uppercase tracking-wider font-mono">Location: {selectedFinding().file} (Line {selectedFinding().line})</span>
-                <h3 class="text-2xl font-bold font-display text-dark-charcoal mt-1">{selectedFinding().secretType}</h3>
+                <span class="text-xs font-bold text-dark-charcoal/50 uppercase tracking-wider font-mono">Location: {maskedFinding().file} (Line {maskedFinding().line})</span>
+                <h3 class="text-2xl font-bold font-display text-dark-charcoal mt-1">{maskedFinding().secretType}</h3>
               </div>
               
               <div class="flex items-center gap-2">
                 <span class="text-xs font-bold text-dark-charcoal/60">AI Verdict:</span>
-                <span class="px-3 py-1 rounded-xl text-xs font-bold uppercase tracking-wider {getVerdictColor(selectedFinding().decision)}">
-                  {selectedFinding().decision}
+                <span class="px-3 py-1 rounded-xl text-xs font-bold uppercase tracking-wider {getVerdictColor(maskedFinding().decision)}">
+                  {maskedFinding().decision}
                 </span>
               </div>
             </div>
@@ -139,9 +148,9 @@
                 <!-- Line Number gutter -->
                 <div class="flex gap-4">
                   <div class="text-bg-warm/30 text-right select-none w-6 border-r border-bg-warm/15 pr-2.5">
-                    {selectedFinding().line}
+                    {maskedFinding().line}
                   </div>
-                  <pre class="flex-1 overflow-x-auto whitespace-pre-wrap select-all font-mono text-bg-warm/85">{selectedFinding().codeContext}</pre>
+                  <pre class="flex-1 overflow-x-auto whitespace-pre-wrap select-all font-mono text-bg-warm/85">{maskedFinding().codeContext}</pre>
                 </div>
               </div>
             </div>
@@ -156,12 +165,12 @@
                 <p class="text-xs text-dark-charcoal/60 mt-0.5">Multi-signal analysis score</p>
                 
                 <div class="mt-6 text-center">
-                  <div class="text-5xl font-extrabold font-display text-dark-charcoal">{selectedFinding().confidence}%</div>
+                  <div class="text-5xl font-extrabold font-display text-dark-charcoal">{maskedFinding().confidence}%</div>
                   <div class="w-full bg-bg-warm rounded-full h-2 mt-4 overflow-hidden border border-dark-charcoal/10">
-                    <div class="h-2 rounded-full {getConfidenceColor(selectedFinding().confidence)} transition-all duration-500" style="width: {selectedFinding().confidence}%"></div>
+                    <div class="h-2 rounded-full {getConfidenceColor(maskedFinding().confidence)} transition-all duration-500" style="width: {maskedFinding().confidence}%"></div>
                   </div>
-                  <div class="mt-2 text-xs font-bold uppercase tracking-wider {selectedFinding().confidence >= 80 ? 'text-red-500' : selectedFinding().confidence >= 55 ? 'text-orange-500' : selectedFinding().confidence >= 30 ? 'text-yellow-500' : 'text-emerald-500'}">
-                    {selectedFinding().confidence >= 80 ? 'High Confidence' : selectedFinding().confidence >= 55 ? 'Medium Confidence' : selectedFinding().confidence >= 30 ? 'Low Confidence' : 'Very Low Confidence'}
+                  <div class="mt-2 text-xs font-bold uppercase tracking-wider {maskedFinding().confidence >= 80 ? 'text-red-500' : maskedFinding().confidence >= 55 ? 'text-orange-500' : maskedFinding().confidence >= 30 ? 'text-yellow-500' : 'text-emerald-500'}">
+                    {maskedFinding().confidence >= 80 ? 'High Confidence' : maskedFinding().confidence >= 55 ? 'Medium Confidence' : maskedFinding().confidence >= 30 ? 'Low Confidence' : 'Very Low Confidence'}
                   </div>
                 </div>
               </div>
@@ -178,7 +187,7 @@
                 <p class="text-xs text-dark-charcoal/60 mt-0.5">Multi-signal context evaluation result</p>
                 
                 <p class="text-sm text-dark-charcoal/80 font-semibold mt-4 leading-relaxed">
-                  {selectedFinding().reason}
+                  {maskedFinding().reason}
                 </p>
               </div>
               
@@ -189,7 +198,7 @@
           </div>
 
           <!-- Signal Analysis Breakdown -->
-          {#if selectedFinding().signalDetails}
+          {#if maskedFinding().signalDetails}
           <div class="bg-card-warm border border-dark-charcoal/10 rounded-3xl p-6 shadow-sm">
             <div class="flex items-center justify-between border-b border-dark-charcoal/10 pb-4 mb-5">
               <div>
@@ -199,7 +208,7 @@
             </div>
 
             <div class="space-y-4">
-              {#each selectedFinding().signalDetails as signal}
+              {#each maskedFinding().signalDetails as signal}
                 <div>
                   <div class="flex items-center justify-between mb-1.5">
                     <div class="flex items-center gap-2">
@@ -230,7 +239,7 @@
               </div>
               
               <button
-                onclick={() => copyFixText(selectedFinding().fix)}
+                onclick={() => copyFixText(maskedFinding().fix)}
                 class="bg-bg-warm border border-dark-charcoal/15 text-dark-charcoal font-bold text-xs px-3.5 py-2 rounded-xl hover:bg-dark-charcoal hover:text-bg-warm transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 {#if copySuccess}
@@ -244,10 +253,10 @@
             </div>
 
             <div class="text-sm font-semibold text-dark-charcoal/80 space-y-3 leading-relaxed">
-              <p>{selectedFinding().fix}</p>
+              <p>{maskedFinding().fix}</p>
               <div class="bg-bg-warm border-l-4 border-l-accent-purple p-3.5 rounded-r-xl">
                 <span class="text-xs font-bold text-accent-purple block uppercase tracking-wider">SecurAI Best Practice:</span>
-                <p class="text-xs text-dark-charcoal/70 mt-1 font-semibold">{selectedFinding().bestPractice}</p>
+                <p class="text-xs text-dark-charcoal/70 mt-1 font-semibold">{maskedFinding().bestPractice}</p>
               </div>
             </div>
           </div>

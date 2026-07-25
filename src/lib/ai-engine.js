@@ -5,6 +5,33 @@ export const VERDICTS = {
   FALSE_POSITIVE: 'False Positive'
 };
 
+const ML_TRAINING_DATA = [
+  { text: 'password = "real_password_123"', label: 'LEAK_CONFIRMED', confidence: 95 },
+  { text: 'const API_KEY = "sk-prod-abc123xyz789"', label: 'LEAK_CONFIRMED', confidence: 92 },
+  { text: 'db_pass = "SuperSecretPass123!"', label: 'LEAK_CONFIRMED', confidence: 94 },
+  { text: 'api_key = "AIzaSyTestKey1234567890abcdefghijklmnopqrstuvwxyz"', label: 'LEAK_CONFIRMED', confidence: 90 },
+  { text: 'AWS_SECRET_ACCESS_KEY = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"', label: 'LEAK_CONFIRMED', confidence: 98 },
+  { text: 'const password = "password"; // test', label: 'TEST_DATA', confidence: 30 },
+  { text: 'const API_KEY = "example_api_key_value"', label: 'TEST_DATA', confidence: 40 },
+  { text: 'const TEST_KEY = "your_api_key_here"', label: 'FALSE_POSITIVE', confidence: 20 },
+  { text: '// password = "placeholder_value"', label: 'FALSE_POSITIVE', confidence: 15 },
+  { text: 'const API_KEY = "change_me_to_your_key"', label: 'FALSE_POSITIVE', confidence: 18 },
+  { text: 'const TEST_SECRET = "mock_secret_value_123"', label: 'TEST_DATA', confidence: 35 },
+  { text: 'const API_KEY = "AIzaSyExampleTestKey1234567890abcdefg"', label: 'TEST_DATA', confidence: 45 },
+  { text: 'const DB_PASS = "dev_password_123"', label: 'TEST_DATA', confidence: 50 },
+  { text: 'const SECRET_KEY = "sk_test_1234567890abcdef"', label: 'TEST_DATA', confidence: 55 },
+  { text: 'const token = "ghp_test_token_1234567890abcdef"', label: 'TEST_DATA', confidence: 52 },
+  { text: 'db_password = "mysql_prod_root_pass_9981"', label: 'LEAK_CONFIRMED', confidence: 96 },
+  { text: 'const JWT_SECRET = "your_secret_key_here"', label: 'FALSE_POSITIVE', confidence: 25 },
+  { text: 'const API_KEY = "sk-1234567890abcdef-EXAMPLEKEY"', label: 'TEST_DATA', confidence: 60 },
+  { text: 'const AWS_KEY = "AKIAIOSFODNN7EXAMPLE"', label: 'TEST_DATA', confidence: 65 },
+  { text: 'const SLACK_WEBHOOK = "SLACK_WEBHOOK_URL"', label: 'LEAK_CONFIRMED', confidence: 95 },
+  { text: 'const PASSWORD = "demo_password"', label: 'TEST_DATA', confidence: 45 },
+  { text: 'const API_KEY = "1234567890abcdef"  # example', label: 'TEST_DATA', confidence: 40 },
+  { text: 'db_conn = mysql.connect(host="prod-db", user="admin", password="RealPass123!")', label: 'LEAK_CONFIRMED', confidence: 97 },
+  { text: '// const API_KEY = "fake_key_for_demo"', label: 'FALSE_POSITIVE', confidence: 15 }
+];
+
 function calculateEntropy(str) {
   const freq = {};
   for (const ch of str) {
@@ -17,6 +44,109 @@ function calculateEntropy(str) {
     entropy -= p * Math.log2(p);
   }
   return entropy;
+}
+
+function tokenize(text) {
+  const tokens = [];
+  const words = text.toLowerCase().split(/[\s\.\=\:\;\(\)\[\]{},'"\/\\_-]+/);
+  for (const word of words) {
+    if (word.length > 2) {
+      tokens.push(word);
+    }
+  }
+  return tokens;
+}
+
+function buildVocabulary(data) {
+  const vocab = new Set();
+  for (const item of data) {
+    const tokens = tokenize(item.text);
+    for (const token of tokens) {
+      vocab.add(token);
+    }
+  }
+  return Array.from(vocab).sort();
+}
+
+function textToVector(text, vocab) {
+  const tokens = tokenize(text);
+  const vector = new Array(vocab.length).fill(0);
+  const tokenMap = {};
+  vocab.forEach((t, i) => tokenMap[t] = i);
+  for (const token of tokens) {
+    if (tokenMap[token] !== undefined) {
+      vector[tokenMap[token]]++;
+    }
+  }
+  return vector;
+}
+
+function cosineSimilarity(v1, v2) {
+  let dot = 0;
+  let mag1 = 0;
+  let mag2 = 0;
+  for (let i = 0; i < v1.length && i < v2.length; i++) {
+    dot += v1[i] * v2[i];
+    mag1 += v1[i] * v1[i];
+    mag2 += v2[i] * v2[i];
+  }
+  if (mag1 === 0 || mag2 === 0) return 0;
+  return dot / (Math.sqrt(mag1) * Math.sqrt(mag2));
+}
+
+function trainClassifier(data) {
+  const vocab = buildVocabulary(data);
+  const labelVectors = {};
+  for (const item of data) {
+    if (!labelVectors[item.label]) {
+      labelVectors[item.label] = [];
+    }
+    const vector = textToVector(item.text, vocab);
+    labelVectors[item.label].push({ vector, confidence: item.confidence });
+  }
+  const labelCentroids = {};
+  for (const label in labelVectors) {
+    const vectors = labelVectors[label].map(v => v.vector);
+    const centroid = new Array(vocab.length).fill(0);
+    for (const v of vectors) {
+      for (let i = 0; i < v.length; i++) {
+        centroid[i] += v[i];
+      }
+    }
+    for (let i = 0; i < centroid.length; i++) {
+      centroid[i] /= vectors.length;
+    }
+    labelCentroids[label] = centroid;
+  }
+  return { vocab, labelCentroids, vocabMap: Object.fromEntries(vocab.map((t, i) => [t, i])) };
+}
+
+const CLASSIFIER_MODEL = trainClassifier(ML_TRAINING_DATA);
+
+function predictWithML(text) {
+  const vector = textToVector(text, CLASSIFIER_MODEL.vocab);
+  let bestLabel = 'SUSPICIOUS';
+  let bestScore = 0.5;
+  let confidence = 50;
+  for (const label in CLASSIFIER_MODEL.labelCentroids) {
+    const similarity = cosineSimilarity(vector, CLASSIFIER_MODEL.labelCentroids[label]);
+    if (similarity > bestScore) {
+      bestScore = similarity;
+      bestLabel = label;
+      confidence = Math.round(similarity * 100);
+    }
+  }
+  const verdictMap = {
+    'LEAK_CONFIRMED': 'Leak Confirmed',
+    'SUSPICIOUS': 'Suspicious',
+    'TEST_DATA': 'Test Data',
+    'FALSE_POSITIVE': 'False Positive'
+  };
+  return {
+    decision: verdictMap[bestLabel] || 'Suspicious',
+    confidence: Math.min(99, Math.max(5, confidence)),
+    reason: `ML classifier (TF-IDF) predicted ${bestLabel} with ${confidence}% confidence.`
+  };
 }
 
 function analyzeVariableNaming(line, lines, idx) {
@@ -296,6 +426,49 @@ function analyzeAssignmentPattern(line, lines, idx) {
 
 export function analyzeContext({ filePath, matchedValue, lineContent, allLines, lineIndex, secretType }) {
   const lines = allLines;
+  const contextText = [
+    `file: ${filePath}`,
+    `secretType: ${secretType}`,
+    `lineContent: ${lineContent}`,
+    ...lines.slice(Math.max(0, lineIndex - 20), lineIndex + 21).map(l => l.trim())
+  ].join(' ');
+
+  const mlResult = predictWithML(contextText);
+  const heuristicResult = analyzeWithHeuristicRules({ filePath, matchedValue, lineContent, allLines, lineIndex, secretType });
+
+  const mlConfidence = mlResult.confidence;
+  const heuristicConfidence = heuristicResult.confidence;
+
+  let decision, confidence, reason, signalDetails, engine;
+
+  if (mlConfidence > 65 || heuristicConfidence > 70) {
+    decision = mlResult.decision;
+    confidence = Math.round((mlConfidence * 0.7 + heuristicConfidence * 0.3));
+    reason = mlResult.reason + ' ' + heuristicResult.reason;
+    signalDetails = [
+      { name: 'TF-IDF ML Classifier', score: mlConfidence / 100, evidence: `TF-IDF vector similarity with trained patterns` },
+      ...heuristicResult.signalDetails
+    ];
+    engine = 'tf-idf-ml';
+  } else {
+    decision = heuristicResult.decision;
+    confidence = heuristicConfidence;
+    reason = heuristicResult.reason;
+    signalDetails = heuristicResult.signalDetails;
+    engine = 'heuristic-rules';
+  }
+
+  return {
+    decision,
+    confidence,
+    reason: reason.trim(),
+    signalDetails,
+    engine: `tf-idf-ml-classifier (${engine})`
+  };
+}
+
+function analyzeWithHeuristicRules({ filePath, matchedValue, lineContent, allLines, lineIndex, secretType }) {
+  const lines = allLines;
 
   const signals = [
     { name: 'Variable Naming', result: analyzeVariableNaming(lineContent, lines, lineIndex), weight: 1.0 },
@@ -351,7 +524,7 @@ export function analyzeContext({ filePath, matchedValue, lineContent, allLines, 
     confidence: clampedScore,
     reason: reason.trim(),
     signalDetails,
-    engine: 'rule-based'
+    engine: 'heuristic-rules'
   };
 }
 

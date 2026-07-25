@@ -2,6 +2,53 @@ import { browser } from '$app/environment';
 import JSZip from 'jszip';
 import { analyzeContext, analyzeWithOllama, VERDICTS } from '$lib/ai-engine.js';
 
+export function maskPII(value, type) {
+  if (!value) return value;
+
+  const mask = (str, visibleStart, visibleEnd, maskChar = 'X') => {
+    if (!str || str.length <= visibleStart + visibleEnd) return str;
+    const start = str.substring(0, visibleStart);
+    const end = str.substring(str.length - visibleEnd);
+    const masked = maskChar.repeat(Math.max(0, str.length - visibleStart - visibleEnd));
+    return `${start}${masked}${end}`;
+  };
+
+  if (type === 'Aadhaar Card Number') {
+    return value.replace(/(\d{4})\s*(\d{4})\s*\d{4}(\d{1})/g, '$1 $2 XXXX $3');
+  }
+  if (type === 'PAN Card Number') {
+    return value.replace(/([A-Z]{5})(\d{4})([A-Z]{1})/g, '$1 XXXX $3');
+  }
+  if (type === 'Credit Card Number') {
+    return value.replace(/(\d{4})[-\s]?(\d{4})[-\s]?(\d{4})[-\s]?(\d{4})/g, 'XXXX-XXXX-XXXX-$4');
+  }
+  if (type === 'AWS Client Access Key') {
+    return mask(value, 4, 4);
+  }
+  if (type === 'OpenAI API Key') {
+    return mask(value, 3, 10);
+  }
+  if (type === 'GitHub OAuth Token') {
+    return mask(value, 4, 4);
+  }
+  if (type === 'Database Password') {
+    return mask(value, 2, 2);
+  }
+  if (type === 'JWT Secret Key') {
+    return mask(value, 2, 2);
+  }
+  if (type === 'Slack Webhook URL') {
+    return value.replace(/(hooks\.slack\.(?:com|invalid)\/services\/)([T0-9a-zA-Z_]+)([\/B0-9a-zA-Z_]+)([\/0-9a-zA-Z_]+)/g, '$1****$3****');
+  }
+
+  return value;
+}
+
+export function getMaskedCodeContext(codeContext, secretType) {
+  if (!codeContext) return codeContext;
+  return maskPII(codeContext, secretType);
+}
+
 // Secret Detection Engine predefined patterns (Module 3 + Module 5 specs)
 const RULES = [
   {

@@ -1,8 +1,17 @@
 <script>
-  import { appState } from '$lib/state.svelte';
+  import { appState, maskPII } from '$lib/state.svelte';
   import { goto } from '$app/navigation';
+  import { browser } from '$app/environment';
 
   const project = $derived(appState.selectedScan);
+
+  const maskedFindings = $derived(() => {
+    if (!project || !project.findings) return [];
+    return project.findings.map(f => ({
+      ...f,
+      codeContext: maskPII(f.codeContext, f.secretType)
+    }));
+  });
 
   // Filter states
   let searchQuery = $state('');
@@ -15,7 +24,7 @@
   const filteredFindings = $derived(() => {
     if (!project || !project.findings) return [];
     
-    let result = [...project.findings];
+    let result = [...maskedFindings()];
 
     // Filter by search query
     if (searchQuery.trim()) {
@@ -91,8 +100,6 @@
     }
     goto('/dashboard/ai-analysis');
   }
-
-  import { browser } from '$app/environment';
 </script>
 
 <div class="space-y-8">
