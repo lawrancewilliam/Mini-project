@@ -1,12 +1,30 @@
 <script>
   import { appState } from '$lib/state.svelte';
+  import { onMount } from 'svelte';
+  import { create3DFloatingLock } from '$lib/3d-cube.js';
+
   
+  let cubeContainer = $state(null);
+  let cubeInstance = $state(null);
+
   function scrollToId(id) {
     const el = document.getElementById(id);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth' });
     }
   }
+  
+  onMount(() => {
+    if (cubeContainer) {
+      cubeInstance = create3DFloatingLock(cubeContainer, !!appState.currentUser);
+    }
+    return () => {
+      if (cubeInstance) {
+        cubeInstance.dispose();
+        cubeInstance = null;
+      }
+    };
+  });
 </script>
 
 <!-- Navigation -->
@@ -62,6 +80,9 @@
       </svg>
       <!-- Glow Ball -->
       <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-accent-purple rounded-full filter blur-[120px]"></div>
+      
+      <!-- 3D Cube Animation -->
+      <div bind:this={cubeContainer} class="absolute top-1/3 right-1/4 w-20 h-20"></div>
     </div>
 
     <div class="max-w-5xl mx-auto text-center relative z-10">
@@ -73,9 +94,9 @@
         v2.4 Release: Deep Neural Credential Matching
       </div>
       
-      <h1 class="text-5xl md:text-7xl font-extrabold font-display leading-tight tracking-tight text-dark-charcoal mb-6">
-        AI-Assisted Sensitive <br />
-        <span class="text-accent-purple">Data Leakage Detection</span>
+      <h1 class="text-5xl md:text-7xl font-extrabold font-display leading-tight tracking-tight mb-6">
+        <span class="text-accent-purple">AI-Assisted Sensitive</span> <br />
+        <span class="text-dark-charcoal">Data Leakage Detection</span>
       </h1>
       
       <p class="text-xl md:text-2xl font-medium text-dark-charcoal/70 max-w-3xl mx-auto mb-10">

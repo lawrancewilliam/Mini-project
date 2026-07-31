@@ -2,10 +2,13 @@
   import { appState } from '$lib/state.svelte';
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
+  import { create3DFloatingLock } from '$lib/3d-cube.js';
 
   const scan = $derived(appState.activeScan);
   let terminalLogs = $state([]);
   let terminalContainer = $state(null);
+  let cubeContainer = $state(null);
+  let cubeInstance = $state(null);
 
   // Simulated log entries based on progress percentage
   const logBlueprints = [
@@ -36,6 +39,11 @@
   // Reactively add logs as progress increases
   $effect(() => {
     const currentProgress = scan.progress;
+    
+    // Update 3D cube color based on progress
+    if (cubeInstance && scan.status === 'scanning') {
+      cubeInstance.updateProgress(currentProgress);
+    }
     
     // Add logs that match the current progress trigger
     logBlueprints.forEach(log => {
@@ -68,6 +76,18 @@
       // Direct load, pre-populate a simulation just in case
       appState.triggerSimulatedScan('quantum-payment-gateway', 'Core payment api gateway', { regex: true, aiAnalysis: true });
     }
+    
+    // Initialize 3D cube
+    if (cubeContainer) {
+      cubeInstance = create3DFloatingLock(cubeContainer, true);
+    }
+    
+    return () => {
+      if (cubeInstance) {
+        cubeInstance.dispose();
+        cubeInstance = null;
+      }
+    };
   });
 </script>
 
@@ -76,6 +96,14 @@
     
     <!-- Top Progress Indicator -->
     <div class="text-center mb-8">
+      <!-- 3D Cube Animation -->
+      {#if scan.status === 'scanning'}
+        <div
+          bind:this={cubeContainer}
+          class="w-24 h-24 mx-auto mb-6"
+        ></div>
+      {/if}
+      
       <div class="inline-flex items-center gap-2 bg-accent-purple/15 text-accent-purple px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider mb-4">
         {#if scan.status === 'scanning'}
           <span class="flex h-2.5 w-2.5 relative">
