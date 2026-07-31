@@ -1,0 +1,3 @@
+[submodule "CredData"]
+	path = CredData
+	url = https://github.com/Samsung/CredData.git
