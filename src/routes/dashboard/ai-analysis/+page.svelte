@@ -255,7 +255,7 @@
             <div class="text-sm font-semibold text-dark-charcoal/80 space-y-3 leading-relaxed">
               <p>{maskedFinding().fix}</p>
               <div class="bg-bg-warm border-l-4 border-l-accent-purple p-3.5 rounded-r-xl">
-                <span class="text-xs font-bold text-accent-purple block uppercase tracking-wider">SecurAI Best Practice:</span>
+                <span class="text-xs font-bold text-accent-purple block uppercase tracking-wider">SecureGuard Best Practice:</span>
                 <p class="text-xs text-dark-charcoal/70 mt-1 font-semibold">{maskedFinding().bestPractice}</p>
               </div>
             </div>

@@ -5,6 +5,7 @@
   // Profile fields state
   let profileName = $state(appState.currentUser ? appState.currentUser.name : '');
   let profileAvatar = $state(appState.currentUser ? appState.currentUser.avatar : '');
+  let profileDob = $state(appState.currentUser ? appState.currentUser.dob || '' : '');
   let updateSuccess = $state(false);
 
   // Password fields state
@@ -20,7 +21,7 @@
 
   function handleUpdateProfile(e) {
     if (e) e.preventDefault();
-    appState.updateProfile(profileName, profileAvatar);
+    appState.updateProfile(profileName, profileAvatar, profileDob);
     updateSuccess = true;
     setTimeout(() => updateSuccess = false, 2000);
   }
@@ -112,6 +113,16 @@
               id="prof-avatar"
               bind:value={profileAvatar}
               required
+              class="w-full bg-bg-warm border border-dark-charcoal/15 px-4 py-2.5 rounded-xl text-sm font-semibold text-dark-charcoal focus:outline-none focus:border-accent-purple purple-glow-border transition-all"
+            />
+          </div>
+
+          <div>
+            <label for="prof-dob" class="block text-xs font-bold text-dark-charcoal/70 mb-1.5">Date of Birth</label>
+            <input
+              type="date"
+              id="prof-dob"
+              bind:value={profileDob}
               class="w-full bg-bg-warm border border-dark-charcoal/15 px-4 py-2.5 rounded-xl text-sm font-semibold text-dark-charcoal focus:outline-none focus:border-accent-purple purple-glow-border transition-all"
             />
           </div>

@@ -34,7 +34,7 @@
       <svg class="w-8 h-8 text-accent-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
       </svg>
-      <span>Secur<span class="text-accent-purple">AI</span></span>
+      <span>SecureGuard</span>
     </a>
     
     <nav class="hidden md:flex items-center gap-8 text-sm font-semibold text-dark-charcoal/80">
@@ -45,7 +45,22 @@
       <button onclick={() => scrollToId('contact')} class="hover:text-accent-purple transition-colors cursor-pointer">Contact</button>
     </nav>
 
-    <div class="flex items-center gap-5">
+    <div class="flex items-center gap-3">
+      <button
+        onclick={() => appState.toggleTheme()}
+        class="p-2.5 rounded-xl border border-dark-charcoal/10 bg-bg-warm hover:bg-dark-charcoal/10 transition-all duration-200 cursor-pointer"
+        title={appState.theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+      >
+        {#if appState.theme === 'dark'}
+          <svg class="w-5 h-5 text-dark-charcoal" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+          </svg>
+        {:else}
+          <svg class="w-5 h-5 text-dark-charcoal" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+          </svg>
+        {/if}
+      </button>
       {#if appState.currentUser}
         <a href="/dashboard" class="inline-flex items-center gap-2 bg-dark-charcoal text-bg-warm px-5 py-2.5 rounded-xl font-semibold hover:bg-accent-purple hover:text-bg-warm transition-all duration-300 shadow-md">
           Dashboard
@@ -159,79 +174,79 @@
 
     <div class="grid md:grid-cols-3 gap-8">
       <!-- AI Detection -->
-      <div class="bg-card-warm p-8 rounded-2xl border border-dark-charcoal/5 shadow-sm hover:translate-y-[-4px] hover:border-accent-purple/30 transition-all duration-300">
-        <div class="w-12 h-12 bg-accent-purple/10 text-accent-purple rounded-xl flex items-center justify-center mb-6">
+      <div class="group bg-card-warm p-8 rounded-2xl border border-dark-charcoal/5 shadow-sm hover:translate-y-[-4px] hover:border-accent-purple/30 hover:bg-[#0a0a0a] hover:shadow-[0_8px_30px_rgba(124,58,237,0.15)] transition-all duration-300 cursor-pointer">
+        <div class="w-12 h-12 bg-accent-purple/10 text-accent-purple group-hover:bg-accent-purple group-hover:text-white rounded-xl flex items-center justify-center mb-6 transition-all duration-300">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
           </svg>
         </div>
-        <h3 class="text-xl font-bold font-display text-dark-charcoal mb-3">AI Context Heuristics</h3>
-        <p class="text-dark-charcoal/70">
+        <h3 class="text-xl font-bold font-display text-dark-charcoal group-hover:text-white mb-3 transition-colors duration-300">AI Context Heuristics</h3>
+        <p class="text-dark-charcoal/70 group-hover:text-white/70 transition-colors duration-300">
           Our specialized neural engine evaluates code surrounding identified items to determine whether they are active, dummy, or false positives.
         </p>
       </div>
 
       <!-- Regex Scanner -->
-      <div class="bg-card-warm p-8 rounded-2xl border border-dark-charcoal/5 shadow-sm hover:translate-y-[-4px] hover:border-accent-purple/30 transition-all duration-300">
-        <div class="w-12 h-12 bg-accent-purple/10 text-accent-purple rounded-xl flex items-center justify-center mb-6">
+      <div class="group bg-card-warm p-8 rounded-2xl border border-dark-charcoal/5 shadow-sm hover:translate-y-[-4px] hover:border-accent-purple/30 hover:bg-[#0a0a0a] hover:shadow-[0_8px_30px_rgba(124,58,237,0.15)] transition-all duration-300 cursor-pointer">
+        <div class="w-12 h-12 bg-accent-purple/10 text-accent-purple group-hover:bg-accent-purple group-hover:text-white rounded-xl flex items-center justify-center mb-6 transition-all duration-300">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
           </svg>
         </div>
-        <h3 class="text-xl font-bold font-display text-dark-charcoal mb-3">Multi-Pattern Regex Engine</h3>
-        <p class="text-dark-charcoal/70">
+        <h3 class="text-xl font-bold font-display text-dark-charcoal group-hover:text-white mb-3 transition-colors duration-300">Multi-Pattern Regex Engine</h3>
+        <p class="text-dark-charcoal/70 group-hover:text-white/70 transition-colors duration-300">
           Scans for over 150 unique credential syntax patterns, from cloud services (AWS, Azure, GCP) to SaaS integration tokens.
         </p>
       </div>
 
       <!-- Risk Assessment -->
-      <div class="bg-card-warm p-8 rounded-2xl border border-dark-charcoal/5 shadow-sm hover:translate-y-[-4px] hover:border-accent-purple/30 transition-all duration-300">
-        <div class="w-12 h-12 bg-accent-purple/10 text-accent-purple rounded-xl flex items-center justify-center mb-6">
+      <div class="group bg-card-warm p-8 rounded-2xl border border-dark-charcoal/5 shadow-sm hover:translate-y-[-4px] hover:border-accent-purple/30 hover:bg-[#0a0a0a] hover:shadow-[0_8px_30px_rgba(124,58,237,0.15)] transition-all duration-300 cursor-pointer">
+        <div class="w-12 h-12 bg-accent-purple/10 text-accent-purple group-hover:bg-accent-purple group-hover:text-white rounded-xl flex items-center justify-center mb-6 transition-all duration-300">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
           </svg>
         </div>
-        <h3 class="text-xl font-bold font-display text-dark-charcoal mb-3">Risk Assessment Models</h3>
-        <p class="text-dark-charcoal/70">
+        <h3 class="text-xl font-bold font-display text-dark-charcoal group-hover:text-white mb-3 transition-colors duration-300">Risk Assessment Models</h3>
+        <p class="text-dark-charcoal/70 group-hover:text-white/70 transition-colors duration-300">
           Provides comprehensive severity levels (Critical, High, Medium, Low) paired with dynamic hazard scores based on repository public access details.
         </p>
       </div>
 
       <!-- PDF Reports -->
-      <div class="bg-card-warm p-8 rounded-2xl border border-dark-charcoal/5 shadow-sm hover:translate-y-[-4px] hover:border-accent-purple/30 transition-all duration-300">
-        <div class="w-12 h-12 bg-accent-purple/10 text-accent-purple rounded-xl flex items-center justify-center mb-6">
+      <div class="group bg-card-warm p-8 rounded-2xl border border-dark-charcoal/5 shadow-sm hover:translate-y-[-4px] hover:border-accent-purple/30 hover:bg-[#0a0a0a] hover:shadow-[0_8px_30px_rgba(124,58,237,0.15)] transition-all duration-300 cursor-pointer">
+        <div class="w-12 h-12 bg-accent-purple/10 text-accent-purple group-hover:bg-accent-purple group-hover:text-white rounded-xl flex items-center justify-center mb-6 transition-all duration-300">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
           </svg>
         </div>
-        <h3 class="text-xl font-bold font-display text-dark-charcoal mb-3">One-Click PDF Reports</h3>
-        <p class="text-dark-charcoal/70">
+        <h3 class="text-xl font-bold font-display text-dark-charcoal group-hover:text-white mb-3 transition-colors duration-300">One-Click PDF Reports</h3>
+        <p class="text-dark-charcoal/70 group-hover:text-white/70 transition-colors duration-300">
           Generate auditing compliance documents containing findings, location details, recommended rotation practices, and status.
         </p>
       </div>
 
       <!-- Multi-Language Support -->
-      <div class="bg-card-warm p-8 rounded-2xl border border-dark-charcoal/5 shadow-sm hover:translate-y-[-4px] hover:border-accent-purple/30 transition-all duration-300">
-        <div class="w-12 h-12 bg-accent-purple/10 text-accent-purple rounded-xl flex items-center justify-center mb-6">
+      <div class="group bg-card-warm p-8 rounded-2xl border border-dark-charcoal/5 shadow-sm hover:translate-y-[-4px] hover:border-accent-purple/30 hover:bg-[#0a0a0a] hover:shadow-[0_8px_30px_rgba(124,58,237,0.15)] transition-all duration-300 cursor-pointer">
+        <div class="w-12 h-12 bg-accent-purple/10 text-accent-purple group-hover:bg-accent-purple group-hover:text-white rounded-xl flex items-center justify-center mb-6 transition-all duration-300">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
           </svg>
         </div>
-        <h3 class="text-xl font-bold font-display text-dark-charcoal mb-3">Multi-Language Code Parsing</h3>
-        <p class="text-dark-charcoal/70">
+        <h3 class="text-xl font-bold font-display text-dark-charcoal group-hover:text-white mb-3 transition-colors duration-300">Multi-Language Code Parsing</h3>
+        <p class="text-dark-charcoal/70 group-hover:text-white/70 transition-colors duration-300">
           Direct support for Python, JavaScript, TypeScript, Go, Java, PHP, YAML configurations, environment parameters, and bash files.
         </p>
       </div>
 
-      <!-- Silent Operations -->
-      <div class="bg-card-warm p-8 rounded-2xl border border-dark-charcoal/5 shadow-sm hover:translate-y-[-4px] hover:border-accent-purple/30 transition-all duration-300">
-        <div class="w-12 h-12 bg-accent-purple/10 text-accent-purple rounded-xl flex items-center justify-center mb-6">
+      <!-- Instant Feedback Loops -->
+      <div class="group bg-card-warm p-8 rounded-2xl border border-dark-charcoal/5 shadow-sm hover:translate-y-[-4px] hover:border-accent-purple/30 hover:bg-[#0a0a0a] hover:shadow-[0_8px_30px_rgba(124,58,237,0.15)] transition-all duration-300 cursor-pointer">
+        <div class="w-12 h-12 bg-accent-purple/10 text-accent-purple group-hover:bg-accent-purple group-hover:text-white rounded-xl flex items-center justify-center mb-6 transition-all duration-300">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
           </svg>
         </div>
-        <h3 class="text-xl font-bold font-display text-dark-charcoal mb-3">Instant Feedback Loops</h3>
-        <p class="text-dark-charcoal/70">
+        <h3 class="text-xl font-bold font-display text-dark-charcoal group-hover:text-white mb-3 transition-colors duration-300">Instant Feedback Loops</h3>
+        <p class="text-dark-charcoal/70 group-hover:text-white/70 transition-colors duration-300">
           Simulates complex pipeline builds and checks code repositories under 15 seconds to minimize deployment bottlenecks.
         </p>
       </div>
@@ -242,7 +257,7 @@
   <section id="workflow" class="py-24 bg-card-warm/40 border-y border-dark-charcoal/10 px-6">
     <div class="max-w-6xl mx-auto">
       <div class="text-center max-w-2xl mx-auto mb-20">
-        <h2 class="text-4xl font-extrabold font-display text-dark-charcoal mb-4">How SecurAI Protects You</h2>
+        <h2 class="text-4xl font-extrabold font-display text-dark-charcoal mb-4">How SecureGuard Protects You</h2>
         <p class="text-lg font-medium text-dark-charcoal/70">
           A seamless pipeline designed to highlight risks and suggest concrete actions.
         </p>
@@ -302,7 +317,7 @@
           Hardcoded credentials remain one of the top causes of data breaches globally. Once committed, credentials can be cached, indexed, and scraped by malicious actors in seconds.
         </p>
         <p class="text-lg text-dark-charcoal/70 leading-relaxed">
-          SecurAI was developed by developers, for developers, to bring AI-powered context validation to regular static scanners. By combining pattern-matching speed with context-aware model checks, we reduce noisy false positives and give you clean, actionable remediation guidelines immediately.
+          SecureGuard was developed by developers, for developers, to bring AI-powered context validation to regular static scanners. By combining pattern-matching speed with context-aware model checks, we reduce noisy false positives and give you clean, actionable remediation guidelines immediately.
         </p>
       </div>
       <div class="relative">
@@ -378,7 +393,7 @@
       <svg class="w-6 h-6 text-accent-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
       </svg>
-      <span>Secur<span class="text-accent-purple">AI</span></span>
+      <span>SecureGuard</span>
     </div>
     
     <div class="flex items-center gap-8 text-xs font-semibold text-dark-charcoal/60">
@@ -388,7 +403,7 @@
     </div>
 
     <div class="text-xs font-bold text-dark-charcoal/40">
-      &copy; 2026 SecurAI Inc. All rights reserved.
+      &copy; 2026 SecureGuard Inc. All rights reserved.
     </div>
   </div>
 </footer>

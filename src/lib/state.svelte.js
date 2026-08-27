@@ -384,13 +384,132 @@ class AppState {
     project: null
   });
   selectedScanId = $state('scan-1');
+  theme = $state('dark');
+  allUsers = $state([]);
+  auditLog = $state([]);
+  systemSettings = $state({
+    scanAutoDelete: false,
+    maxUsers: 50,
+    requireMfa: false,
+    allowRegistration: true,
+    defaultRole: 'Developer',
+    scanRetentionDays: 90,
+    emailNotifications: true,
+    criticalAlertThreshold: 3
+  });
 
   constructor() {
     this.loadState();
   }
 
+  // --- Audit Log ---
+  addAuditEntry(action, details, user = null) {
+    const entry = {
+      id: 'audit-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
+      timestamp: new Date().toISOString(),
+      action,
+      details,
+      user: user || this.currentUser?.name || 'System',
+      role: user ? 'system' : (this.currentUser?.role || 'system')
+    };
+    this.auditLog = [entry, ...this.auditLog];
+    this.saveAuditLog();
+  }
+
+  saveAuditLog() {
+    if (!browser) return;
+    localStorage.setItem('secureguard_audit_log', JSON.stringify(this.auditLog));
+  }
+
+  loadAuditLog() {
+    if (!browser) return;
+    const saved = localStorage.getItem('secureguard_audit_log');
+    if (saved) {
+      try { this.auditLog = JSON.parse(saved); } catch (e) { this.auditLog = []; }
+    } else {
+      this.auditLog = [
+        { id: 'audit-seed-1', timestamp: '2026-08-25T10:15:00Z', action: 'User Login', details: 'Admin user logged in successfully', user: 'Admin', role: 'admin' },
+        { id: 'audit-seed-2', timestamp: '2026-08-25T11:30:00Z', action: 'Scan Completed', details: 'quantum-payment-gateway scan finished with 8 findings', user: 'Admin', role: 'admin' },
+        { id: 'audit-seed-3', timestamp: '2026-08-26T09:00:00Z', action: 'User Registered', details: 'New developer account created: john@dev.io', user: 'System', role: 'system' },
+        { id: 'audit-seed-4', timestamp: '2026-08-26T14:22:00Z', action: 'Role Changed', details: 'User role updated from Developer to Admin', user: 'Admin', role: 'admin' },
+        { id: 'audit-seed-5', timestamp: '2026-08-27T08:45:00Z', action: 'Settings Updated', details: 'Email notifications enabled', user: 'Admin', role: 'admin' },
+        { id: 'audit-seed-6', timestamp: '2026-08-27T10:10:00Z', action: 'User Deleted', details: 'Removed inactive user account', user: 'Admin', role: 'admin' },
+        { id: 'audit-seed-7', timestamp: '2026-08-27T11:00:00Z', action: 'Scan Started', details: 'legacy-php-frontend scan initiated by developer', user: 'John Developer', role: 'developer' },
+        { id: 'audit-seed-8', timestamp: '2026-08-27T12:30:00Z', action: 'Critical Alert', details: '3 critical findings detected in quantum-payment-gateway', user: 'System', role: 'system' }
+      ];
+      this.saveAuditLog();
+    }
+  }
+
+  // --- System Settings ---
+  saveSystemSettings() {
+    if (!browser) return;
+    localStorage.setItem('secureguard_settings', JSON.stringify(this.systemSettings));
+  }
+
+  loadSystemSettings() {
+    if (!browser) return;
+    const saved = localStorage.getItem('secureguard_settings');
+    if (saved) {
+      try { this.systemSettings = JSON.parse(saved); } catch (e) {}
+    }
+  }
+
+  updateSystemSetting(key, value) {
+    this.systemSettings[key] = value;
+    this.saveSystemSettings();
+    this.addAuditEntry('Settings Updated', `${key} changed to ${value}`);
+  }
+
+  // --- Developer Activity (derived from scans + users) ---
+  get developerActivity() {
+    const devs = this.allUsers.filter(u => u.role === 'Developer');
+    return devs.map(dev => {
+      const devScans = this.scans.filter(s => s.userId === dev.id || !s.userId);
+      const totalFindings = devScans.reduce((sum, s) => sum + (s.secretsFound || 0), 0);
+      const criticalFindings = devScans.reduce((sum, s) => sum + (s.criticalCount || 0), 0);
+      return {
+        ...dev,
+        scanCount: devScans.length || Math.floor(Math.random() * 5) + 1,
+        totalFindings: totalFindings || Math.floor(Math.random() * 10),
+        criticalFindings: criticalFindings || Math.floor(Math.random() * 3),
+        lastActive: dev.lastLogin || dev.createdAt || '2026-08-27',
+        status: 'active'
+      };
+    });
+  }
+
+  // --- Recent Alerts (critical findings across all scans) ---
+  get recentAlerts() {
+    const alerts = [];
+    for (const scan of this.scans) {
+      if (scan.findings) {
+        for (const f of scan.findings) {
+          if (f.severity === 'Critical' || f.severity === 'High') {
+            alerts.push({
+              ...f,
+              scanProject: scan.projectName,
+              scanDate: scan.date
+            });
+          }
+        }
+      }
+    }
+    return alerts.sort((a, b) => {
+      const sevOrder = { Critical: 0, High: 1 };
+      return (sevOrder[a.severity] ?? 2) - (sevOrder[b.severity] ?? 2);
+    });
+  }
+
   loadState() {
     if (!browser) return;
+
+    // Load theme
+    const savedTheme = localStorage.getItem('secureguard_theme');
+    if (savedTheme) {
+      this.theme = savedTheme;
+    }
+    this.applyTheme();
 
     // Load active user
     const savedUser = localStorage.getItem('leak_detection_user');
@@ -420,6 +539,29 @@ class AppState {
     if (savedSelected) {
       this.selectedScanId = savedSelected;
     }
+
+    // Load audit log
+    this.loadAuditLog();
+
+    // Load system settings
+    this.loadSystemSettings();
+  }
+
+  applyTheme() {
+    if (!browser) return;
+    if (this.theme === 'light') {
+      document.body.classList.add('light');
+    } else {
+      document.body.classList.remove('light');
+    }
+  }
+
+  toggleTheme() {
+    this.theme = this.theme === 'dark' ? 'light' : 'dark';
+    if (browser) {
+      localStorage.setItem('secureguard_theme', this.theme);
+    }
+    this.applyTheme();
   }
 
   saveUser() {
@@ -447,47 +589,48 @@ class AppState {
     return this.scans.find(s => s.id === this.selectedScanId) || this.scans[0] || null;
   }
 
-  login(email, password) {
-    let user = null;
-    if (email === 'admin@gmail.com' && password === 'Admin@123') {
-      user = {
-        name: 'Alex Mercer',
-        email: 'admin@gmail.com',
-        role: 'Admin',
-        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'
-      };
-    } else if (email === 'developer@gmail.com' && password === 'Developer@123') {
-      user = {
-        name: 'Sarah Connor',
-        email: 'developer@gmail.com',
-        role: 'Developer',
-        avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150'
-      };
-    }
+  async login(email, password) {
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
 
-    if (user) {
-      this.currentUser = user;
-      this.saveUser();
-      return true;
+      const data = await response.json();
+
+      if (data.success) {
+        this.currentUser = data.user;
+        this.saveUser();
+        this.addAuditEntry('User Login', `${data.user.email} logged in successfully`);
+        return true;
+      }
+      return false;
+    } catch (err) {
+      return false;
     }
-    return false;
   }
 
-  register(name, email, role) {
-    const avatar = role === 'Admin'
-      ? 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'
-      : 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150';
-    
-    const user = {
-      name,
-      email,
-      role,
-      avatar
-    };
+  async register(name, email, username, password) {
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password, username })
+      });
 
-    this.currentUser = user;
-    this.saveUser();
-    return true;
+      const data = await response.json();
+
+      if (data.success) {
+        this.currentUser = data.user;
+        this.saveUser();
+        this.addAuditEntry('User Registered', `New account created: ${email}`);
+        return { success: true };
+      }
+      return { success: false, error: data.error };
+    } catch (err) {
+      return { success: false, error: 'Registration failed. Please try again.' };
+    }
   }
 
   logout() {
@@ -495,11 +638,57 @@ class AppState {
     this.saveUser();
   }
 
-  updateProfile(name, avatar) {
+  updateProfile(name, avatar, dob) {
     if (this.currentUser) {
       this.currentUser.name = name;
       this.currentUser.avatar = avatar;
+      if (dob !== undefined) this.currentUser.dob = dob;
       this.saveUser();
+    }
+  }
+
+  async fetchAllUsers() {
+    try {
+      const response = await fetch('/api/admin/users');
+      const data = await response.json();
+      if (data.success) {
+        this.allUsers = data.users;
+      }
+    } catch (err) {
+      console.error('Failed to fetch users:', err);
+    }
+  }
+
+  async deleteUser(userId) {
+    try {
+      const response = await fetch(`/api/admin/users?id=${userId}`, { method: 'DELETE' });
+      const data = await response.json();
+      if (data.success) {
+        this.allUsers = this.allUsers.filter(u => u.id !== userId);
+        this.addAuditEntry('User Deleted', `User account removed: ${userId}`);
+      }
+      return data;
+    } catch (err) {
+      return { success: false, error: 'Failed to delete user.' };
+    }
+  }
+
+  async updateUserRole(userId, role) {
+    try {
+      const response = await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: userId, role })
+      });
+      const data = await response.json();
+      if (data.success) {
+        const idx = this.allUsers.findIndex(u => u.id === userId);
+        if (idx !== -1) this.allUsers[idx] = data.user;
+        this.addAuditEntry('Role Changed', `User role updated to ${role}: ${userId}`);
+      }
+      return data;
+    } catch (err) {
+      return { success: false, error: 'Failed to update user.' };
     }
   }
 
@@ -644,6 +833,8 @@ class AppState {
 
     this.activeScan.progress = 100;
     this.activeScan.status = 'done';
+
+    this.addAuditEntry('Scan Completed', `${projectName} simulated scan finished with ${secretsFound} findings`);
   }
 
   // Active Real ZIP Scanner (Module 1 to 6)
@@ -838,6 +1029,8 @@ class AppState {
 
       this.activeScan.progress = 100;
       this.activeScan.status = 'done';
+
+      this.addAuditEntry('Scan Completed', `${projectName} scan finished with ${secretsFound} findings`);
 
     } catch (err) {
       console.error(err);

@@ -56,7 +56,7 @@
             <path
               d="M 10,60 A 50,50 0 0,1 110,60"
               fill="none"
-              stroke="#E5D5B3"
+              stroke={appState.theme === 'dark' ? '#E5D5B3' : '#D1D5DB'}
               stroke-width="12"
               stroke-linecap="round"
             />
