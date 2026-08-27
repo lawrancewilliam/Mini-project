@@ -163,13 +163,9 @@
           <div class="group bg-bg-warm border border-dark-charcoal/10 rounded-2xl p-5 hover:border-accent-purple/30 hover:shadow-md transition-all duration-200">
             <div class="flex items-start justify-between mb-4">
               <div class="flex items-center gap-3">
-                {#if dev.avatar}
-                  <img src={dev.avatar} alt={dev.name} class="w-11 h-11 rounded-xl object-cover border border-dark-charcoal/10" />
-                {:else}
-                  <div class="w-11 h-11 rounded-xl bg-accent-purple/15 text-accent-purple flex items-center justify-center text-sm font-extrabold font-display">
-                    {getInitials(dev.name)}
-                  </div>
-                {/if}
+                <div class="w-11 h-11 rounded-xl bg-accent-purple/15 text-accent-purple border border-accent-purple/20 flex items-center justify-center text-sm font-extrabold font-display">
+                  {getInitials(dev.name)}
+                </div>
                 <div>
                   <div class="font-bold text-sm text-dark-charcoal">{dev.name}</div>
                   <div class="text-xs text-dark-charcoal/50">{dev.email}</div>
@@ -277,13 +273,9 @@
             <tr class="border-b border-dark-charcoal/5 text-sm font-semibold text-dark-charcoal hover:bg-bg-warm/40 transition-colors">
               <td class="py-3.5 px-4">
                 <div class="flex items-center gap-3">
-                  {#if user.avatar}
-                    <img src={user.avatar} alt={user.name} class="w-9 h-9 rounded-xl object-cover border border-dark-charcoal/10" />
-                  {:else}
-                    <div class="w-9 h-9 rounded-xl bg-accent-purple/15 text-accent-purple flex items-center justify-center text-xs font-extrabold font-display">
-                      {getInitials(user.name)}
-                    </div>
-                  {/if}
+                  <div class="w-9 h-9 rounded-xl bg-accent-purple/15 text-accent-purple border border-accent-purple/20 flex items-center justify-center text-xs font-extrabold font-display">
+                    {getInitials(user.name)}
+                  </div>
                   <div>
                     <div class="font-bold text-sm">{user.name}</div>
                     <div class="text-[10px] text-dark-charcoal/50">@{user.username}</div>

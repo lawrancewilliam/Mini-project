@@ -32,6 +32,7 @@ export async function POST({ request }) {
 
     return json({ success: true, user: safeUser }, { status: 200 });
   } catch (err) {
-    return json({ success: false, error: 'Login failed. Please try again.' }, { status: 500 });
+    console.error('Login API error:', err);
+    return json({ success: false, error: err?.message || 'Login failed. Please try again.' }, { status: 500 });
   }
 }

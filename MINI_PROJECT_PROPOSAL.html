@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MINI PROJECT PROPOSAL</title>
+  <style>
+    body {
+      font-family: 'Times New Roman', Times, serif;
+      background-color: #f3f4f6;
+      margin: 0;
+      padding: 40px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .action-bar {
+      width: 210mm;
+      background: #ffffff;
+      padding: 12px 24px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .btn {
+      background-color: #111827;
+      color: #ffffff;
+      border: none;
+      padding: 8px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: Arial, sans-serif;
+    }
+
+    .btn:hover {
+      background-color: #374151;
+    }
+
+    .page {
+      background: #ffffff;
+      width: 210mm;
+      height: 297mm;
+      padding: 20mm;
+      position: relative;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      box-sizing: border-box;
+    }
+
+    .border-frame {
+      position: absolute;
+      top: 10mm;
+      bottom: 10mm;
+      left: 10mm;
+      right: 10mm;
+      border: 1px solid #000000;
+      pointer-events: none;
+    }
+
+    .content {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-sizing: border-box;
+      padding: 10mm 15mm;
+    }
+
+    .header-title {
+      font-size: 22px;
+      font-weight: bold;
+      text-align: center;
+      text-transform: uppercase;
+      margin-bottom: 30px;
+      letter-spacing: 0.5px;
+    }
+
+    .section {
+      margin-bottom: 22px;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .section-body {
+      font-size: 15px;
+      line-height: 1.5;
+      text-align: justify;
+      text-indent: 30px;
+    }
+
+    .project-title {
+      font-size: 15px;
+      line-height: 1.5;
+      margin-left: 30px;
+    }
+
+    .student-details {
+      font-size: 15px;
+      line-height: 1.5;
+      margin-left: 10px;
+    }
+
+    .student-entry {
+      margin-bottom: 12px;
+    }
+
+    .student-entry div {
+      margin-left: 20px;
+    }
+
+    .footer-signatures {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: auto;
+      padding-top: 40px;
+    }
+
+    .sig-block {
+      width: 200px;
+      text-align: center;
+    }
+
+    .sig-title {
+      font-size: 14px;
+      font-weight: bold;
+      text-transform: uppercase;
+      border-top: 1px transparent;
+      padding-top: 5px;
+    }
+
+    @media print {
+      body {
+        background: #ffffff;
+        padding: 0;
+        margin: 0;
+      }
+      .action-bar {
+        display: none;
+      }
+      .page {
+        box-shadow: none;
+        width: 210mm;
+        height: 297mm;
+        padding: 20mm;
+      }
+      .border-frame {
+        top: 10mm;
+        bottom: 10mm;
+        left: 10mm;
+        right: 10mm;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="action-bar">
+    <span style="font-family: Arial, sans-serif; font-size: 14px; font-weight: bold;">📄 SecurAI Proposal Document</span>
+    <button onclick="window.print()" class="btn">Print / Save PDF</button>
+  </div>
+
+  <div class="page">
+    <div class="border-frame"></div>
+    <div class="content">
+      
+      <div>
+        <div class="header-title">MINI PROJECT PROPOSAL</div>
+
+        <!-- Project Title -->
+        <div class="section">
+          <div class="section-title">Project Title</div>
+          <div class="project-title">
+            SecurAI: An AI-Assisted Sensitive Data Leakage Detection and Prevention System
+          </div>
+        </div>
+
+        <!-- Problem Statement -->
+        <div class="section">
+          <div class="section-title">Problem Statement</div>
+          <div class="section-body">
+            In modern software development, developers frequently integrate third-party APIs, databases, cloud resources, and authentication services into their codebases. During local development and testing, sensitive credentials—such as API keys, database passwords, private encryption keys, JWT secrets, and SSL certificates—are often hardcoded directly into source files. When these codebases are committed and pushed to public or shared version control systems, these credentials leak, exposing enterprise architecture to massive security breaches. Conventional credential-scanning tools rely exclusively on static Regular Expressions (regex) to flag potential leaks, resulting in high false positive rates and developer alert fatigue. There is a critical need for an intelligent, context-aware web platform that identifies potential leaks and dynamically validates them using machine learning heuristics.
+          </div>
+        </div>
+
+        <!-- Abstract -->
+        <div class="section">
+          <div class="section-title">Abstract</div>
+          <div class="section-body">
+            SecurAI is an advanced, lightweight web-based security tool engineered to detect, classify, and mitigate sensitive data leaks within source code. Developed using the SvelteKit framework, Node.js, and Tailwind CSS, the platform incorporates a robust hybrid scanning engine to address the deficiencies of traditional static analysis. The core scan pipeline leverages a multi-layered verification strategy combining regex pattern matching, variable name heuristics, and Shannon entropy analysis. Furthermore, it incorporates a machine learning classifier based on TF-IDF vectorization and Cosine Similarity to categorize flagged credentials into Leak Confirmed, Suspicious, Test Data, or False Positive verdicts. SecurAI features an interactive dashboard powered by Chart.js for real-time risk visualization, supports batch repository uploads, and provides automated, audit-ready PDF report generation using html2canvas and jsPDF.
+          </div>
+        </div>
+
+        <!-- Student Details -->
+        <div class="section">
+          <div class="section-title">Student Details</div>
+          <div class="student-details">
+            <div class="student-entry">
+              1. Naresh S<br>
+              <div>Register No: 2503617862221052</div>
+            </div>
+            <div class="student-entry">
+              2. Ragavendhiran R<br>
+              <div>Register No: 2503617862221066</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Signatures footer -->
+      <div class="footer-signatures">
+        <div class="sig-block">
+          <div class="sig-title">GUIDE SIGNATURE</div>
+        </div>
+        <div class="sig-block">
+          <div class="sig-title">STUDENT SIGNATURES</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>

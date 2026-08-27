@@ -1,7 +1,6 @@
 <script>
   import { appState } from '$lib/state.svelte';
   import { onMount } from 'svelte';
-  import { create3DFloatingLock } from '$lib/3d-cube.js';
 
   
   let cubeContainer = $state(null);
@@ -15,10 +14,18 @@
   }
   
   onMount(() => {
+    let active = true;
     if (cubeContainer) {
-      cubeInstance = create3DFloatingLock(cubeContainer, !!appState.currentUser);
+      import('$lib/3d-cube.js').then(({ create3DFloatingLock }) => {
+        if (active && cubeContainer) {
+          cubeInstance = create3DFloatingLock(cubeContainer, !!appState.currentUser);
+        }
+      }).catch(err => {
+        console.error('Failed to load 3D lock module:', err);
+      });
     }
     return () => {
+      active = false;
       if (cubeInstance) {
         cubeInstance.dispose();
         cubeInstance = null;
@@ -347,7 +354,7 @@
           </ul>
           
           <div class="mt-8 border-t border-dark-charcoal/10 pt-6 flex items-center gap-4">
-            <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100" alt="CTO" class="w-12 h-12 rounded-full object-cover" />
+            <div class="w-12 h-12 rounded-full bg-accent-purple/15 text-accent-purple border border-accent-purple/20 flex items-center justify-center font-bold text-sm shrink-0">ER</div>
             <div>
               <div class="font-bold text-dark-charcoal text-sm">Elena Rostova</div>
               <div class="text-xs text-dark-charcoal/60 font-semibold">Chief of Security Research</div>

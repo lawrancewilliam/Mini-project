@@ -28,7 +28,6 @@
     {
       name: 'Dashboard',
       path: '/dashboard',
-      adminOnly: true,
       icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z"></path></svg>`
     },
     {
@@ -170,7 +169,11 @@
     <!-- User Profile & Logout -->
     <div class="mt-8 border-t border-dark-charcoal/10 pt-6 space-y-4">
       <div class="flex items-center gap-3">
-        <img src={appState.currentUser.avatar} alt="User avatar" class="w-10 h-10 rounded-xl object-cover border border-accent-purple/20" />
+        <div class="w-10 h-10 rounded-xl bg-accent-purple/15 text-accent-purple border border-accent-purple/20 flex items-center justify-center font-bold text-sm shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+          </svg>
+        </div>
         <div class="min-w-0 flex-1">
           <div class="font-bold text-sm text-dark-charcoal truncate">{appState.currentUser.name}</div>
           <div class="text-[10px] bg-dark-charcoal/10 border border-dark-charcoal/15 text-dark-charcoal/70 rounded px-1.5 py-0.5 font-bold uppercase tracking-wider inline-block mt-0.5">

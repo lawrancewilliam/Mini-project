@@ -41,9 +41,7 @@ export async function POST({ request }) {
       return json({ success: false, error: 'This username is already taken.' }, { status: 409 });
     }
 
-    const avatar = role === 'Admin'
-      ? 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'
-      : 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150';
+    const avatar = '';
 
     const newUser = {
       id: randomUUID(),
@@ -63,6 +61,7 @@ export async function POST({ request }) {
 
     return json({ success: true, user: safeUser }, { status: 201 });
   } catch (err) {
-    return json({ success: false, error: 'Registration failed. Please try again.' }, { status: 500 });
+    console.error('Register API error:', err);
+    return json({ success: false, error: err?.message || 'Registration failed. Please try again.' }, { status: 500 });
   }
 }

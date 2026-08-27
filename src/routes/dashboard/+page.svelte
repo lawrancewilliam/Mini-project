@@ -281,7 +281,9 @@
               <tr class="border-b border-dark-charcoal/5 text-sm font-semibold text-dark-charcoal hover:bg-bg-warm/40 transition-colors">
                 <td class="py-3.5 px-4">
                   <div class="flex items-center gap-3">
-                    <img src={user.avatar} alt={user.name} class="w-9 h-9 rounded-xl object-cover border border-dark-charcoal/10" />
+                    <div class="w-9 h-9 rounded-xl bg-accent-purple/15 text-accent-purple border border-accent-purple/20 flex items-center justify-center font-bold text-xs shrink-0">
+                      {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                    </div>
                     <div>
                       <div class="font-bold text-sm">{user.name}</div>
                       <div class="text-[10px] text-dark-charcoal/50">{user.id?.slice(0, 8)}...</div>

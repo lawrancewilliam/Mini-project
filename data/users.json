@@ -6,7 +6,7 @@
     "password": "Admin@123",
     "username": "admin",
     "role": "Admin",
-    "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150",
+    "avatar": "",
     "createdAt": "2026-08-26T00:00:00.000Z"
   },
   {
@@ -16,7 +16,7 @@
     "password": "Developer@123",
     "username": "sarahc",
     "role": "Developer",
-    "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150",
+    "avatar": "",
     "createdAt": "2026-08-26T00:00:00.000Z"
   },
   {
@@ -26,7 +26,17 @@
     "password": "William@26",
     "username": "lawrance_william",
     "role": "Developer",
-    "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150",
+    "avatar": "",
     "createdAt": "2026-08-27T04:05:35.661Z"
+  },
+  {
+    "id": "833d5892-ee0f-416a-8a29-4f69d5e751cb",
+    "name": "kishore pm",
+    "email": "kishorekishorei170@gamil.com",
+    "password": "Kishore@1223",
+    "username": "kishore",
+    "role": "Developer",
+    "avatar": "",
+    "createdAt": "2026-08-27T04:40:50.453Z"
   }
 ]

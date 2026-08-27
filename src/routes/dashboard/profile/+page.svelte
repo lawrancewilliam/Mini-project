@@ -58,11 +58,11 @@
 <div class="space-y-8">
   <!-- Profile Header Card -->
   <div class="bg-card-warm border border-dark-charcoal/10 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row items-center gap-6">
-    <img
-      src={appState.currentUser?.avatar}
-      alt="User profile"
-      class="w-24 h-24 rounded-3xl object-cover border-2 border-accent-purple/30 shadow-md shrink-0"
-    />
+    <div class="w-20 h-20 rounded-3xl bg-accent-purple/15 text-accent-purple border-2 border-accent-purple/30 flex items-center justify-center shrink-0">
+      <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+      </svg>
+    </div>
     
     <div class="text-center sm:text-left space-y-2 flex-1">
       <div class="inline-block bg-accent-purple/15 border border-accent-purple/20 text-accent-purple font-bold text-xs px-3 py-1 rounded-full uppercase tracking-wider">

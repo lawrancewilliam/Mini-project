@@ -19,7 +19,8 @@ export async function GET() {
     const safeUsers = users.map(({ password, ...rest }) => rest);
     return json({ success: true, users: safeUsers }, { status: 200 });
   } catch (err) {
-    return json({ success: false, error: 'Failed to load users.' }, { status: 500 });
+    console.error('GET admin users error:', err);
+    return json({ success: false, error: err?.message || 'Failed to load users.' }, { status: 500 });
   }
 }
 
@@ -40,7 +41,8 @@ export async function DELETE({ url }) {
     writeFileSync(USERS_FILE, JSON.stringify(filtered, null, 2), 'utf-8');
     return json({ success: true }, { status: 200 });
   } catch (err) {
-    return json({ success: false, error: 'Failed to delete user.' }, { status: 500 });
+    console.error('DELETE admin user error:', err);
+    return json({ success: false, error: err?.message || 'Failed to delete user.' }, { status: 500 });
   }
 }
 
@@ -63,6 +65,7 @@ export async function PATCH({ request }) {
     const { password: _, ...safeUser } = user;
     return json({ success: true, user: safeUser }, { status: 200 });
   } catch (err) {
-    return json({ success: false, error: 'Failed to update user.' }, { status: 500 });
+    console.error('PATCH admin user error:', err);
+    return json({ success: false, error: err?.message || 'Failed to update user.' }, { status: 500 });
   }
 }

@@ -228,29 +228,29 @@
                 {#if password.length > 0}
                   <div class="mt-3 transition-all duration-300">
                     <div class="flex items-center justify-between mb-1.5">
-                      <span class="text-[10px] font-bold text-white/30 uppercase tracking-wider">Strength</span>
+                      <span class="text-[10px] font-bold text-white/70 uppercase tracking-wider">Strength</span>
                       <span class="text-[10px] font-bold {strengthInfo.text}">{strengthInfo.label}</span>
                     </div>
-                    <div class="h-1 bg-white/[0.06] rounded-full overflow-hidden">
+                    <div class="h-1 bg-white/[0.15] rounded-full overflow-hidden">
                       <div class="h-full {strengthInfo.color} {strengthInfo.width} rounded-full transition-all duration-500 ease-out"></div>
                     </div>
 
                     <div class="mt-3 grid grid-cols-2 gap-1.5">
                       <div class="flex items-center gap-1.5">
-                        <div class="w-1.5 h-1.5 rounded-full transition-colors duration-200 {hasMinLength(password) ? 'bg-green-400' : 'bg-white/10'}"></div>
-                        <span class="text-[10px] font-medium {hasMinLength(password) ? 'text-white/50' : 'text-white/20'}">8+ characters</span>
+                        <div class="w-1.5 h-1.5 rounded-full transition-colors duration-200 {hasMinLength(password) ? 'bg-green-400' : 'bg-white/30'}"></div>
+                        <span class="text-[11px] font-medium {hasMinLength(password) ? 'text-green-400 font-semibold' : 'text-white/70'}">8+ characters</span>
                       </div>
                       <div class="flex items-center gap-1.5">
-                        <div class="w-1.5 h-1.5 rounded-full transition-colors duration-200 {hasUpperCase(password) ? 'bg-green-400' : 'bg-white/10'}"></div>
-                        <span class="text-[10px] font-medium {hasUpperCase(password) ? 'text-white/50' : 'text-white/20'}">Uppercase letter</span>
+                        <div class="w-1.5 h-1.5 rounded-full transition-colors duration-200 {hasUpperCase(password) ? 'bg-green-400' : 'bg-white/30'}"></div>
+                        <span class="text-[11px] font-medium {hasUpperCase(password) ? 'text-green-400 font-semibold' : 'text-white/70'}">Uppercase letter</span>
                       </div>
                       <div class="flex items-center gap-1.5">
-                        <div class="w-1.5 h-1.5 rounded-full transition-colors duration-200 {hasNumber(password) ? 'bg-green-400' : 'bg-white/10'}"></div>
-                        <span class="text-[10px] font-medium {hasNumber(password) ? 'text-white/50' : 'text-white/20'}">Number</span>
+                        <div class="w-1.5 h-1.5 rounded-full transition-colors duration-200 {hasNumber(password) ? 'bg-green-400' : 'bg-white/30'}"></div>
+                        <span class="text-[11px] font-medium {hasNumber(password) ? 'text-green-400 font-semibold' : 'text-white/70'}">Number</span>
                       </div>
                       <div class="flex items-center gap-1.5">
-                        <div class="w-1.5 h-1.5 rounded-full transition-colors duration-200 {hasSymbol(password) ? 'bg-green-400' : 'bg-white/10'}"></div>
-                        <span class="text-[10px] font-medium {hasSymbol(password) ? 'text-white/50' : 'text-white/20'}">Special symbol</span>
+                        <div class="w-1.5 h-1.5 rounded-full transition-colors duration-200 {hasSymbol(password) ? 'bg-green-400' : 'bg-white/30'}"></div>
+                        <span class="text-[11px] font-medium {hasSymbol(password) ? 'text-green-400 font-semibold' : 'text-white/70'}">Special symbol</span>
                       </div>
                     </div>
                   </div>
