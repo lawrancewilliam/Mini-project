@@ -115,16 +115,18 @@ Runs 6 weighted signals to compute a confidence score:
 
 ## 👤 Authentication System
 
-**Simulated auth** stored in `localStorage` — no backend or database.
+**Supabase Authentication** backed by `public.profiles` with row-level security.
 
-| Account | Email | Password | Role |
-|---------|-------|----------|------|
-| Admin | `admin@gmail.com` | `Admin@123` | Admin |
-| Developer | `developer@gmail.com` | `Developer@123` | Developer |
-| Any new user | (via register) | (any) | Admin or Developer |
+| Account | Email | Role |
+|---------|-------|------|
+| Admin (created in Supabase Dashboard) | `admin@gmail.com` | Admin |
+| Developer (via register) | (signup email) | Developer |
 
-- Dashboard is **auth-guarded** via `onMount` + `$effect` reactive check
-- Logout shows a confirmation modal before clearing session
+- New registrations are always **Developer** — the role is database-assigned via `public.profiles.role` and never accepted from the registration form.
+- The initial Admin is provisioned in the **Supabase Dashboard → Authentication → Users**, then promoted to Admin by an admin/SQL run:
+  `UPDATE public.profiles SET role = 'Admin' WHERE email = 'admin@gmail.com';`
+- Passwords are managed entirely by Supabase Auth and are never stored in source code.
+- Dashboard is **auth-guarded** via `$effect` reactive check + role-based route guard; admin-only routes redirect Developers to `/dashboard`.
 
 ---
 

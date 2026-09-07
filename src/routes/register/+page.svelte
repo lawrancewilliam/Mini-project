@@ -6,7 +6,6 @@
   let lastName = $state('');
   let email = $state('');
   let password = $state('');
-  let role = $state('Developer'); // Default
   let errorMsg = $state('');
   let isLoading = $state(false);
 
@@ -14,7 +13,7 @@
     if (e) e.preventDefault();
     errorMsg = '';
 
-    if (!firstName || !lastName || !email || !password || !role) {
+    if (!firstName || !lastName || !email || !password) {
       errorMsg = 'Please complete all required fields.';
       return;
     }
@@ -29,8 +28,9 @@
     try {
       const fullName = `${firstName} ${lastName}`.trim();
       // Supabase signUp hands full_name via user metadata. The DB trigger on
-      // auth.users creates the profiles row automatically.
-      const data = await appState.register(fullName, email, password, role);
+      // auth.users creates the profiles row automatically; role is assigned
+      // server-side as 'Developer' and is never accepted from this form.
+      const data = await appState.register(fullName, email, password);
 
       if (data.session) {
         goto('/dashboard');
@@ -73,7 +73,7 @@
 
   const steps = [
     { num: '01', label: 'Create your account' },
-    { num: '02', label: 'Pick your access role' },
+    { num: '02', label: 'Confirm your email' },
     { num: '03', label: 'Start scanning' }
   ];
 </script>
@@ -224,28 +224,6 @@
               placeholder="•••••••• (Min 6 chars)"
               class="w-full bg-bg-warm border border-dark-charcoal/15 px-4 py-3 rounded-xl text-dark-charcoal font-semibold focus:outline-none focus:border-accent-purple purple-glow-border transition-all"
             />
-          </div>
-
-          <!-- Role Selector -->
-          <div>
-            <label class="block text-sm font-bold text-dark-charcoal/70 mb-2">Access Role</label>
-            <div class="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onclick={() => role = 'Developer'}
-                class="border rounded-xl p-3 text-center cursor-pointer transition-all font-bold text-xs {role === 'Developer' ? 'bg-accent-purple border-accent-purple text-bg-warm' : 'bg-bg-warm border-dark-charcoal/15 text-dark-charcoal hover:border-accent-purple/30'}"
-              >
-                Developer
-              </button>
-
-              <button
-                type="button"
-                onclick={() => role = 'Admin'}
-                class="border rounded-xl p-3 text-center cursor-pointer transition-all font-bold text-xs {role === 'Admin' ? 'bg-accent-purple border-accent-purple text-bg-warm' : 'bg-bg-warm border-dark-charcoal/15 text-dark-charcoal hover:border-accent-purple/30'}"
-              >
-                Administrator
-              </button>
-            </div>
           </div>
 
           <!-- Error Msg -->

@@ -1,9 +1,7 @@
 <script>
   import { appState } from '$lib/state.svelte';
   import { browser } from '$app/environment';
-  import { maskPII } from '$lib/state.svelte.js';
-  import jsPDF from 'jspdf';
-  import html2canvas from 'html2canvas';
+  import { generateReportPdf, reportFileName, reportIdFor } from '$lib/report-generator.js';
 
   let selectedProject = $state(null);
   let showPreviewModal = $state(false);
@@ -27,212 +25,14 @@
     setTimeout(() => toast = null, 3000);
   }
 
-  function getRiskLevel(score) {
-    if (score >= 75) return { label: 'CRITICAL', color: '#EF4444' };
-    if (score >= 40) return { label: 'HIGH', color: '#F97316' };
-    if (score > 0) return { label: 'MEDIUM', color: '#EAB308' };
-    return { label: 'LOW', color: '#22C55E' };
-  }
-
-  function buildReportHTML(project) {
-    const risk = getRiskLevel(project.riskScore);
-    const findingsRows = project.findings.map((f, i) => `
-      <tr>
-        <td style="padding: 10px 12px; border-bottom: 1px solid #2a2a2a; font-size: 11px; color: #cccccc; font-family: monospace;">${f.file}</td>
-        <td style="padding: 10px 12px; border-bottom: 1px solid #2a2a2a; font-size: 11px; color: #888888; text-align: center; font-family: monospace;">${f.line}</td>
-        <td style="padding: 10px 12px; border-bottom: 1px solid #2a2a2a; font-size: 11px; color: #ffffff; font-weight: 600;">${f.secretType}</td>
-        <td style="padding: 10px 12px; border-bottom: 1px solid #2a2a2a; text-align: center;">
-          <span style="display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; background: ${f.severity === 'Critical' ? '#FEE2E2' : f.severity === 'High' ? '#FFF7ED' : f.severity === 'Medium' ? '#FEFCE8' : '#EFF6FF'}; color: ${f.severity === 'Critical' ? '#DC2626' : f.severity === 'High' ? '#EA580C' : f.severity === 'Medium' ? '#CA8A04' : '#2563EB'};">${f.severity}</span>
-        </td>
-        <td style="padding: 10px 12px; border-bottom: 1px solid #2a2a2a; font-size: 10px; color: ${f.decision === 'Leak Confirmed' ? '#F87171' : f.decision === 'Suspicious' ? '#FB923C' : '#6B7280'}; font-weight: 600; text-align: center;">${f.decision}</td>
-        <td style="padding: 10px 12px; border-bottom: 1px solid #2a2a2a; font-size: 11px; color: #ffffff; text-align: center; font-weight: 700;">${f.confidence}%</td>
-      </tr>
-    `).join('');
-
-const detailsSection = project.findings.map((f, i) => {
-      const maskedCode = maskPII(f.codeContext, f.secretType);
-      return `
-      <div style="background: #1a1a1a; border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid #2a2a2a;">
-        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-          <span style="width: 32px; height: 32px; background: #7C3AED; color: #ffffff; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700;">${i + 1}</span>
-          <div>
-            <div style="font-size: 14px; font-weight: 700; color: #ffffff;">${f.secretType}</div>
-            <div style="font-size: 10px; color: #888888; font-family: monospace;">${f.file} : ${f.line}</div>
-          </div>
-          <span style="margin-left: auto; padding: 3px 10px; border-radius: 999px; font-size: 9px; font-weight: 700; text-transform: uppercase; background: ${f.severity === 'Critical' ? '#FEE2E2' : f.severity === 'High' ? '#FFF7ED' : f.severity === 'Medium' ? '#FEFCE8' : '#EFF6FF'}; color: ${f.severity === 'Critical' ? '#DC2626' : f.severity === 'High' ? '#EA580C' : f.severity === 'Medium' ? '#CA8A04' : '#2563EB'};">${f.severity}</span>
-        </div>
-        <div style="background: #0a0a0a; border-radius: 8px; padding: 12px; font-family: monospace; font-size: 10px; color: #aaaaaa; margin-bottom: 12px; border: 1px solid #2a2a2a; white-space: pre-wrap;">
-          <span style="color: #7C3AED;">>> </span>${maskedCode}
-        </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-          <div>
-            <div style="font-size: 9px; color: #7C3AED; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">AI Verdict</div>
-            <div style="font-size: 11px; color: #cccccc;">${f.decision} (${f.confidence}% confidence)</div>
-            <div style="font-size: 10px; color: #888888; margin-top: 4px;">${f.reason}</div>
-          </div>
-          <div>
-            <div style="font-size: 9px; color: #7C3AED; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Remediation</div>
-            <div style="font-size: 10px; color: #cccccc;">${f.fix}</div>
-          </div>
-        </div>
-      </div>
-      `;
-    }).join('');
-
-    return `<!DOCTYPE html>
-<html>
-<head>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { 
-      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif; 
-      background: #0a0a0a; 
-      color: #ffffff; 
-      padding: 0;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-    }
-    h1, h2, h3, h4 { font-family: 'Outfit', sans-serif; }
-    .header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
-    .logo { width: 40px; height: 40px; background: #7C3AED; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
-    .divider { height: 1px; background: linear-gradient(to right, #7C3AED, transparent); margin: 16px 0; }
-    table { width: 100%; border-collapse: collapse; }
-    th { padding: 10px 12px; font-size: 9px; color: #888888; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid #7C3AED; text-align: left; }
-    .pdf-page { border: 2px solid #7C3AED; border-radius: 16px; padding: 40px; background: #0a0a0a; margin-bottom: 32px; min-height: 1273px; }
-  </style>
-</head>
-<body>
-  <div class="pdf-page">
-    <div class="header">
-      <div class="logo">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-      </div>
-      <div>
-        <div style="font-size: 22px; font-weight: 800; font-family: 'Outfit', sans-serif;">SecureGuard</div>
-        <div style="font-size: 10px; color: #888888;">Security Compliance Audit Report</div>
-      </div>
-      <div style="margin-left: auto; text-align: right;">
-        <div style="font-size: 11px; color: #888888;">${project.date}</div>
-        <div style="font-size: 10px; color: #555555;">Report ID: SEC-${project.id}</div>
-      </div>
-    </div>
-
-    <div class="divider"></div>
-
-      <div style="display: flex; gap: 24px; margin-bottom: 20px;">
-        <div style="flex: 1; background: #161616; border-radius: 16px; padding: 20px; border: 1px solid #2a2a2a;">
-          <div style="font-size: 10px; color: #888888; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Project</div>
-          <div style="font-size: 18px; font-weight: 700; font-family: 'Outfit', sans-serif;">${project.projectName.toUpperCase()}</div>
-          <div style="font-size: 11px; color: #888888; margin-top: 4px;">${project.projectDescription}</div>
-        </div>
-        <div style="flex: 1; background: #161616; border-radius: 16px; padding: 20px; border: 1px solid #2a2a2a; text-align: center;">
-          <div style="font-size: 10px; color: #888888; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Risk Score</div>
-          <div style="font-size: 42px; font-weight: 800; font-family: 'Outfit', sans-serif; color: ${risk.color};">${project.riskScore}</div>
-          <div style="font-size: 11px; color: ${risk.color}; font-weight: 700;">${risk.label}</div>
-        </div>
-      </div>
-
-      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px;">
-      <div style="background: #161616; border-radius: 12px; padding: 16px; text-align: center; border: 1px solid #2a2a2a;">
-        <div style="font-size: 10px; color: #888888; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Files</div>
-        <div style="font-size: 24px; font-weight: 800; font-family: 'Outfit', sans-serif; margin-top: 4px;">${project.filesScanned}</div>
-      </div>
-      <div style="background: #161616; border-radius: 12px; padding: 16px; text-align: center; border: 1px solid #2a2a2a;">
-        <div style="font-size: 10px; color: #888888; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Leaks</div>
-        <div style="font-size: 24px; font-weight: 800; font-family: 'Outfit', sans-serif; margin-top: 4px; color: #EF4444;">${project.secretsFound}</div>
-      </div>
-      <div style="background: #161616; border-radius: 12px; padding: 16px; text-align: center; border: 1px solid #2a2a2a;">
-        <div style="font-size: 10px; color: #888888; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Critical</div>
-        <div style="font-size: 24px; font-weight: 800; font-family: 'Outfit', sans-serif; margin-top: 4px; color: #EF4444;">${project.criticalCount}</div>
-      </div>
-      <div style="background: #161616; border-radius: 12px; padding: 16px; text-align: center; border: 1px solid #2a2a2a;">
-        <div style="font-size: 10px; color: #888888; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Status</div>
-        <div style="font-size: 14px; font-weight: 800; font-family: 'Outfit', sans-serif; margin-top: 4px; color: ${project.secretsFound > 0 ? '#EF4444' : '#22C55E'};">${project.secretsFound > 0 ? 'FAIL' : 'PASS'}</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="pdf-page">
-    <h2 style="font-size: 16px; font-weight: 700; margin-bottom: 12px;">Detection Findings Summary</h2>
-    <table style="margin-bottom: 20px;">
-      <thead>
-        <tr>
-          <th>File</th>
-          <th style="text-align: center;">Line</th>
-          <th>Secret Type</th>
-          <th style="text-align: center;">Severity</th>
-          <th style="text-align: center;">Status</th>
-          <th style="text-align: center;">Conf.</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${findingsRows || '<tr><td colspan="6" style="padding: 24px; text-align: center; font-size: 12px; color: #888888;">No sensitive data leaks detected in this codebase.</td></tr>'}
-      </tbody>
-    </table>
-  </div>
-
-  ${project.findings.length > 0 ? `
-  <div class="pdf-page">
-    <h2 style="font-size: 16px; font-weight: 700; margin-bottom: 12px;">Detailed Analysis</h2>
-      ${detailsSection}
-    </div>
-    ` : ''}
-
-    <div class="pdf-page">
-      <div class="divider" style="margin-top: 20px;"></div>
-      <div style="text-align: center; padding: 20px; font-size: 10px; color: #555555;">
-      <div style="font-weight: 700; color: #888888; margin-bottom: 4px;">SecureGuard Credential Scanner</div>
-      <div>Generated dynamically by SecureGuard Security Analysis Engine</div>
-      <div style="margin-top: 8px;">AI-Assisted Sensitive Data Leakage Detection and Risk Assessment</div>
-    </div>
-  </div>
-</body>
-</html>`;
-  }
-
   async function triggerDownload(project) {
     if (!browser || isGenerating) return;
     isGenerating = true;
     showToast('Generating PDF report...', 'info');
 
     try {
-      const html = buildReportHTML(project);
-      const iframe = document.createElement('iframe');
-      iframe.style.position = 'fixed';
-      iframe.style.top = '-10000px';
-      iframe.style.left = '-10000px';
-      iframe.style.width = '900px';
-      iframe.style.height = '1px';
-      iframe.style.border = 'none';
-      document.body.appendChild(iframe);
-
-      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-      iframeDoc.open();
-      iframeDoc.write(html);
-      iframeDoc.close();
-
-      await new Promise(r => setTimeout(r, 2000));
-
-      const pages = iframeDoc.querySelectorAll('.pdf-page');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-
-      for (let i = 0; i < pages.length; i++) {
-        const canvas = await html2canvas(pages[i], {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          backgroundColor: '#0a0a0a'
-        });
-        if (i > 0) pdf.addPage();
-        const imgData = canvas.toDataURL('image/png');
-        const imgW = 210;
-        const imgH = (canvas.height * imgW) / canvas.width;
-        pdf.addImage(imgData, 'PNG', 0, 0, imgW, imgH, undefined, 'FAST');
-      }
-
-      document.body.removeChild(iframe);
-      pdf.save(`secureguard_report_${project.projectName}.pdf`);
+      const doc = generateReportPdf(project);
+      doc.save(reportFileName(project));
       showToast('PDF report downloaded successfully!', 'success');
     } catch (err) {
       console.error('PDF generation failed:', err);
@@ -358,12 +158,12 @@ const detailsSection = project.findings.map((f, i) => {
             <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
           </div>
           <div>
-            <div class="text-lg font-bold font-display text-white">SecureGuard</div>
-            <div class="text-[10px] text-gray-500">Security Compliance Audit Report</div>
+            <div class="text-lg font-bold font-display text-white">SecurAI</div>
+            <div class="text-[10px] text-gray-500">Security Assessment Report</div>
           </div>
           <div class="ml-auto text-right text-[10px] text-gray-500">
             <div>{selectedProject.date}</div>
-            <div class="text-gray-600">ID: SEC-{selectedProject.id}</div>
+            <div class="text-gray-600">ID: {reportIdFor(selectedProject)}</div>
           </div>
         </div>
 
@@ -422,7 +222,7 @@ const detailsSection = project.findings.map((f, i) => {
 
         <div class="h-px bg-gradient-to-r from-accent-purple to-transparent mt-6 mb-4"></div>
         <div class="text-center text-[8px] text-gray-600">
-          Generated by SecureGuard Credential Scanner &mdash; AI-Assisted Data Leakage Detection
+          Generated by SecurAI - AI-Assisted Sensitive Data Leakage Detection
         </div>
       </div>
 

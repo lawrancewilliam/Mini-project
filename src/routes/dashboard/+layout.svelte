@@ -19,14 +19,14 @@
   const ADMIN_ONLY_PATHS = ['/dashboard/users'];
 
   // Route guard: wait for the Supabase session to restore before redirecting,
-  // then require a valid session and enforce role-based access.
+  // then require a valid session and enforce role-based access using the role
+  // sourced from public.profiles (exposed via appState.currentUser.role).
   $effect(() => {
     if (appState.authLoading) return;
     if (!appState.currentUser) {
       goto('/login');
       return;
     }
-    // Role-based route guard: admin monitors, developers scan
     const path = page.url.pathname;
     const role = appState.currentUser.role;
     if (role === 'Admin' && DEVELOPER_ONLY_PATHS.some(p => path.startsWith(p))) {
@@ -99,6 +99,10 @@
   const visibleNavItems = $derived(
     (navItems.filter(item => (item.roles || ['Admin', 'Developer']).includes(appState.currentUser?.role)))
   );
+
+  function initials(name = '') {
+    return name.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'U';
+  }
 
   function isActive(path) {
     const currentPath = page.url.pathname;
@@ -174,7 +178,9 @@
     <!-- User Profile & Logout -->
     <div class="mt-8 border-t border-dark-charcoal/10 pt-6 space-y-4">
       <div class="flex items-center gap-3">
-        <img src={appState.currentUser.avatar} alt="User avatar" class="w-10 h-10 rounded-xl object-cover border border-accent-purple/20" />
+        <div class="w-10 h-10 rounded-xl bg-accent-purple/15 text-accent-purple border border-accent-purple/30 flex items-center justify-center font-extrabold font-display text-sm shrink-0">
+          {initials(appState.currentUser.name)}
+        </div>
         <div class="min-w-0 flex-1">
           <div class="font-bold text-sm text-dark-charcoal truncate">{appState.currentUser.name}</div>
           <div class="text-[10px] bg-dark-charcoal/10 border border-dark-charcoal/15 text-dark-charcoal/70 rounded px-1.5 py-0.5 font-bold uppercase tracking-wider inline-block mt-0.5">

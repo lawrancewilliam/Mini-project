@@ -1,27 +1,4 @@
-export const RULES = [
-  { name: 'AWS Client Access Key', regex: /\b(AKIA[0-9A-Z]{16})\b/g },
-  { name: 'Google API Key', regex: /\b(AIza[0-9A-Za-z-_]{35})\b/g },
-  { name: 'OpenAI API Key', regex: /\b(sk-[a-zA-Z0-9]{48})\b/g },
-  { name: 'GitHub OAuth Token', regex: /\b((?:ghp|gho|ghu|ghs|ghr)_[a-zA-Z0-9]{36})\b/g },
-  { name: 'SSH/RSA Private Key', regex: /-----BEGIN [A-Z ]+ PRIVATE KEY-----/g },
-  { name: 'PAN Card Number', regex: /\b([A-Z]{5}[0-9]{4}[A-Z]{1})\b/g },
-  { name: 'Aadhaar Card Number', regex: /\b(\d{4}\s\d{4}\s\d{4}|\d{12})\b/g },
-  { name: 'Credit Card Number', regex: /\b((?:\d{4}[- ]?){3}\d{4})\b/g },
-  { name: 'Database Password', regex: /\b(password|pass|passwd|db_password|db_pass)\s*=[ \t]*['"]([^'"]+)['"]/ig },
-  { name: 'JWT Secret Key', regex: /\b(jwt_secret|jwt_key|token_secret|session_secret)\s*=[ \t]*['"]([^'"]+)['"]/ig },
-  { name: 'Slack Webhook URL', regex: /https:\/\/hooks\.slack\.(?:com|invalid)\/services\/[T0-9a-zA-Z_]+\/[B0-9a-zA-Z_]+\/[0-9a-zA-Z_]+/g },
-  { name: 'Stripe API Key', regex: /\b((sk|rk)_(live|test)_[0-9a-zA-Z]{16,24})\b/g },
-  { name: 'Telegram Bot Token', regex: /\b(\d{8,10}:[A-Za-z0-9_-]{35})\b/g },
-  { name: 'Discord Webhook URL', regex: /https:\/\/discord(app)?\.com\/api\/webhooks\/\d{16,19}\/[A-Za-z0-9_-]{60,}/g },
-  { name: 'Slack API Token', regex: /\b(xox[baprs]-[0-9A-Za-z-]{10,62})\b/g },
-  { name: 'Twilio API Key', regex: /\b(SK[0-9a-fA-F]{32})\b/g },
-  { name: 'Azure Storage Account Key', regex: /\b(?:AccountKey|SharedAccessKey)=([a-zA-Z0-9+/=]{80,})\b/g },
-  { name: 'Google OAuth Client Secret', regex: /\b(GOCSPX-[A-Za-z0-9_-]{20,})\b/g },
-  { name: 'MongoDB Connection String', regex: /\b(mongodb(\+srv)?:\/\/[^\s"']+:[^\s"']+@[^\s"']+)\b/g },
-  { name: 'PostgreSQL/MySQL Connection URL', regex: /\b((postgres|postgresql|mysql):\/\/[^\s"']+:[^\s"']+@[^\s"']+)\b/g },
-  { name: 'GitLab Personal Access Token', regex: /\b(glpat-[A-Za-z0-9_-]{20})\b/g },
-  { name: 'npm Access Token', regex: /\b(npm_[A-Za-z0-9]{36})\b/g },
-  { name: 'HashiCorp Vault Token', regex: /\b(hvs\.[A-Za-z0-9_-]{24,})\b/g },
-  { name: 'Email Address PII', regex: /\b([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z0-9.-]+)\b/g },
-  { name: 'Phone Number PII', regex: /\b((?:\+?\d{1,3}[- ]?)?\(?\d{3}\)?[- ]?\d{3}[- ]?\d{4})\b/g }
-];
+// CLI mirror of the SecurAI detection rules. Kept as a re-export of the app's
+// single source of truth (src/lib/detection-rules.js) so CLI/dev tools always
+// run the same boundary-safe regexes and value groups as the production scanner.
+export { RULES } from '../src/lib/detection-rules.js';

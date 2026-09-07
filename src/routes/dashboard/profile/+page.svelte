@@ -5,7 +5,6 @@
 
   // Profile fields state
   let profileName = $state('');
-  let profileAvatar = $state('');
   let updateSuccess = $state(false);
   let updateError = $state('');
 
@@ -26,7 +25,6 @@
     const user = appState.currentUser;
     if (user) {
       profileName = user.name || user.full_name || '';
-      profileAvatar = user.avatar || '';
     }
   });
 
@@ -34,12 +32,16 @@
     if (e) e.preventDefault();
     updateError = '';
     try {
-      await appState.updateProfile(profileName, profileAvatar);
+      await appState.updateProfile(profileName);
       updateSuccess = true;
       setTimeout(() => updateSuccess = false, 2000);
     } catch (err) {
       updateError = authErrorMessage(err);
     }
+  }
+
+  function initials(name = '') {
+    return name.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'U';
   }
 
   async function handleChangePassword(e) {
@@ -96,11 +98,9 @@
 <div class="space-y-8">
   <!-- Profile Header Card -->
   <div class="bg-card-warm border border-dark-charcoal/10 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row items-center gap-6">
-    <img
-      src={appState.currentUser?.avatar}
-      alt="User profile"
-      class="w-24 h-24 rounded-3xl object-cover border-2 border-accent-purple/30 shadow-md shrink-0"
-    />
+    <div class="w-24 h-24 rounded-3xl bg-accent-purple/15 text-accent-purple border-2 border-accent-purple/30 shadow-md shrink-0 flex items-center justify-center font-extrabold font-display text-3xl">
+      {initials(appState.currentUser?.name)}
+    </div>
     
     <div class="text-center sm:text-left space-y-2 flex-1">
       <div class="inline-block bg-accent-purple/15 border border-accent-purple/20 text-accent-purple font-bold text-xs px-3 py-1 rounded-full uppercase tracking-wider">
@@ -130,7 +130,7 @@
     <div class="bg-card-warm border border-dark-charcoal/10 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
       <div>
         <h4 class="text-lg font-bold font-display text-dark-charcoal mb-2">Edit Account Information</h4>
-        <p class="text-xs text-dark-charcoal/60 mb-6 font-semibold">Change display names and avatar links used in console audits</p>
+        <p class="text-xs text-dark-charcoal/60 mb-6 font-semibold">Change the display name used across the console</p>
         
         <form onsubmit={handleUpdateProfile} class="space-y-4">
           <div>
@@ -145,17 +145,7 @@
           </div>
 
           <div>
-            <label for="prof-avatar" class="block text-xs font-bold text-dark-charcoal/70 mb-1.5">Avatar Image URL</label>
-            <input
-              type="url"
-              id="prof-avatar"
-              bind:value={profileAvatar}
-              required
-              class="w-full bg-bg-warm border border-dark-charcoal/15 px-4 py-2.5 rounded-xl text-sm font-semibold text-dark-charcoal focus:outline-none focus:border-accent-purple purple-glow-border transition-all"
-            />
-          </div>
-
-          {#if updateError}
+            {#if updateError}
             <div class="bg-red-50 border-l-4 border-red-500 p-3 rounded-r-xl text-xs font-bold text-red-600 animate-in fade-in">
               {updateError}
             </div>

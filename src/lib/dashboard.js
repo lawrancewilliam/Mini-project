@@ -1,4 +1,6 @@
 import { supabase } from '$lib/supabase.js';
+import { RULES } from '$lib/detection-rules.js';
+import { maskSensitiveValue, redactMatches, spanForMatch, defaultCandidate } from '$lib/masking.js';
 
 // Supabase is the source of truth for projects, scans, findings, scan_files and
 // reports. RLS scopes every query to the authenticated user's own records.
@@ -185,25 +187,65 @@ export async function persistScanResult({ projectName, findings = [], filesScann
   if (scanError) throw scanError;
 
   if (findings.length > 0) {
-    // Mask sensitive values before persisting: NEVER store raw secrets.
-    const maskedValues = findings.map(f =>
-      maskFinding(f.codeContext || '', f.secretType || '') || `${f.secretType || 'Unknown'} [masked]`
-    );
-    const findingsRows = findings.map((f, i) => ({
-      scan_id: scan.id,
-      project_id: project.id,
-      file_path: f.file || '',
-      line_number: f.line || null,
-      secret_type: f.secretType || 'Unknown',
-      masked_value: maskedValues[i],
-      severity: f.severity || 'Low',
-      severity_score: severityWeight(f.severity),
-      confidence_score: f.confidence != null ? Number(f.confidence) : null,
-      ai_verdict: normalizeVerdict(f.decision),
-      detection_method: f.reason ? f.reason.slice(0, 500) : null,
-      context_snippet: maskedValues[i] || f.codeContext || null,
-      recommendation: f.fix || null
-    }));
+    const findingsRows = findings.map(f => {
+      const secretType = f.secretType || 'Unknown';
+      const contextSource = f.codeContext || '';
+      const rule = RULES.find(r => r.name === secretType);
+
+      // Defensive redaction: the scanner already stores a redacted
+      // context_snippet, but re-scan the line and mask any residual plaintext
+      // occurrences of this type so raw values are NEVER persisted.
+      const occurrences = [];
+      if (rule) {
+        rule.regex.lastIndex = 0;
+        let m;
+        const text = String(contextSource);
+        while ((m = rule.regex.exec(text)) !== null) {
+          const span = spanForMatch(m, rule);
+          occurrences.push({
+            index: span.index,
+            length: span.length,
+            maskedValue: maskSensitiveValue(span.raw, secretType)
+          });
+        }
+      }
+      if (occurrences.length === 0) {
+        // No rule match in the context (e.g. simulated findings that never set
+        // an explicit match): fall back to masking a quoted candidate value.
+        const candidate = defaultCandidate(contextSource);
+        if (candidate) {
+          occurrences.push({
+            index: candidate.index,
+            length: candidate.length,
+            maskedValue: maskSensitiveValue(candidate.raw, secretType)
+          });
+        }
+      }
+
+      const contextSnippet = occurrences.length > 0
+        ? redactMatches(String(contextSource), occurrences)
+        : String(contextSource);
+
+      const maskedValue = f.maskedValue
+        || (occurrences[0] && occurrences[0].maskedValue)
+        || `${secretType} [masked]`;
+
+      return {
+        scan_id: scan.id,
+        project_id: project.id,
+        file_path: f.file || '',
+        line_number: f.line || null,
+        secret_type: secretType,
+        masked_value: maskedValue,
+        severity: f.severity || 'Low',
+        severity_score: severityWeight(f.severity),
+        confidence_score: f.confidence != null ? Number(f.confidence) : null,
+        ai_verdict: normalizeVerdict(f.decision),
+        detection_method: f.reason ? f.reason.slice(0, 500) : null,
+        context_snippet: contextSnippet,
+        recommendation: f.fix || null
+      };
+    });
 
     const { error: findingsError } = await supabase.from('findings').insert(findingsRows);
     if (findingsError) throw findingsError;
@@ -227,29 +269,6 @@ function normalizeVerdict(decision) {
   if (decision === 'Test Data') return 'Test Data';
   if (decision === 'Suspicious') return 'Suspicious';
   return 'Leak Confirmed';
-}
-
-// Mask a snippet to its first 3 and last 6 characters (or per-secret-type mask),
-// so raw secrets are never stored or emitted.
-function maskFinding(value, type) {
-  if (!value) return '';
-  const mask = (str, visibleStart, visibleEnd, maskChar = 'X') => {
-    if (!str || str.length <= visibleStart + visibleEnd) return str;
-    const start = str.substring(0, visibleStart);
-    const end = str.substring(str.length - visibleEnd);
-    const masked = maskChar.repeat(Math.max(0, str.length - visibleStart - visibleEnd));
-    return `${start}${masked}${end}`;
-  };
-  if (type === 'Aadhaar Card Number') {
-    return value.replace(/(\d{4})\s*(\d{4})\s*\d{4}(\d{1})/g, '$1 $2 XXXX $3');
-  }
-  if (type === 'PAN Card Number') {
-    return value.replace(/([A-Z]{5})(\d{4})([A-Z]{1})/g, '$1 XXXX $3');
-  }
-  if (type === 'Credit Card Number') {
-    return value.replace(/(\d{4})[-\s]?(\d{4})[-\s]?(\d{4})[-\s]?(\d{4})/g, 'XXXX-XXXX-XXXX-$4');
-  }
-  return mask(value, 3, 6);
 }
 
 // Delete a scan (and dependent findings/scan_files via cascade) for the user.

@@ -54,6 +54,10 @@
       : 'bg-blue-100 text-blue-600 border-blue-200';
   }
 
+  function initials(name = '') {
+    return name.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'U';
+  }
+
   const totalScans = $derived(appState.scans.length);
   const activeUsers = $derived(
     appState.users.filter(u => userScans(u.email).length > 0).length
@@ -128,7 +132,9 @@
               <tr class="border-b border-dark-charcoal/5 text-sm font-semibold text-dark-charcoal hover:bg-bg-warm/40 transition-colors">
                 <td class="py-3.5 px-4">
                   <div class="flex items-center gap-3">
-                    <img src={user.avatar} alt="User avatar" class="w-10 h-10 rounded-xl object-cover border border-accent-purple/20" />
+                    <div class="w-10 h-10 rounded-xl bg-accent-purple/15 text-accent-purple border border-accent-purple/30 flex items-center justify-center font-extrabold font-display text-sm shrink-0">
+                      {initials(user.name)}
+                    </div>
                     <div class="min-w-0">
                       <div class="font-bold truncate">
                         {user.name}

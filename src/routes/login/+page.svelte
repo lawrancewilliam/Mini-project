@@ -16,7 +16,12 @@
 
     try {
       await appState.login(email, password);
-      goto('/dashboard');
+      // Route by database role (public.profiles.role), never by email address.
+      if (appState.currentUser?.role === 'Admin') {
+        goto('/dashboard/users');
+      } else {
+        goto('/dashboard');
+      }
     } catch (err) {
       errorMsg = authErrorMessage(err);
     } finally {
