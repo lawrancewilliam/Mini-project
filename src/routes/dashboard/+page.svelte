@@ -7,7 +7,7 @@
   let typesChart = $state(null);
 
   // Gather global widgets data
-  const totalProjects = $derived(appState.scans.length);
+  const totalProjects = $derived(new Set(appState.scans.map(s => s.projectId)).size);
   const totalSecrets = $derived(appState.scans.reduce((sum, s) => sum + s.secretsFound, 0));
   const totalCritical = $derived(appState.scans.reduce((sum, s) => sum + s.criticalCount, 0));
   
@@ -120,6 +120,29 @@
 </script>
 
 <div class="space-y-8">
+  {#if appState.dashboardLoading && appState.scans.length === 0}
+    <div class="bg-card-warm border border-dark-charcoal/10 rounded-3xl p-12 text-center shadow-sm">
+      <div class="w-14 h-14 rounded-3xl bg-accent-purple/10 text-accent-purple flex items-center justify-center mx-auto mb-5 animate-pulse">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+      </div>
+      <h3 class="text-xl font-bold font-display text-dark-charcoal">Loading your scanning data...</h3>
+      <p class="text-sm text-dark-charcoal/60 mt-2">Fetching projects and scan history from the secure archive.</p>
+    </div>
+  {:else if appState.dashboardError && appState.scans.length === 0}
+    <div class="bg-card-warm border border-dark-charcoal/10 rounded-3xl p-12 text-center shadow-sm">
+      <div class="w-16 h-16 rounded-3xl bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-6">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+      </div>
+      <h3 class="text-xl font-bold font-display text-dark-charcoal">Could not load scanning data</h3>
+      <p class="text-sm text-dark-charcoal/60 mt-2 max-w-sm mx-auto">{appState.dashboardError}</p>
+      <button
+        onclick={() => appState.refreshDashboard()}
+        class="inline-flex items-center gap-2 bg-accent-purple text-bg-warm font-bold px-6 py-3 rounded-xl mt-6 hover:bg-dark-charcoal hover:text-bg-warm transition-colors cursor-pointer"
+      >
+        Retry
+      </button>
+    </div>
+  {:else}
   <!-- Widgets Row -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
     <!-- Projects Scanned -->
@@ -349,5 +372,6 @@
         Upload Project
       </a>
     </div>
+  {/if}
   {/if}
 </div>

@@ -73,8 +73,10 @@
   // Guard against navigating directly here without an active scan
   onMount(() => {
     if (scan.status === 'idle') {
-      // Direct load, pre-populate a simulation just in case
-      appState.triggerSimulatedScan('quantum-payment-gateway', 'Core payment api gateway', { regex: true, aiAnalysis: true });
+      // No active scan in progress: route the developer to start one from the
+      // Upload page instead of fabricating demo scan data.
+      goto('/dashboard/upload');
+      return;
     }
     
     // Initialize 3D cube

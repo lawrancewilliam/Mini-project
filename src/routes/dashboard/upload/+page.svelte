@@ -81,14 +81,6 @@
     
     goto('/dashboard/scanning');
   }
-
-  // Pre-fill a sandbox mock project for quick test clicks
-  function quickFill() {
-    projectName = 'payment-microservice-node';
-    projectDescription = 'Staging payment service, written in Node JS/Express with Stripe webhooks and JWT middlewares.';
-    zipFile = { name: 'payment-microservice-node.zip', size: 1048576 };
-    errorMsg = '';
-  }
 </script>
 
 <div class="max-w-4xl mx-auto space-y-8">
@@ -98,14 +90,6 @@
         <h3 class="text-2xl font-bold font-display text-dark-charcoal">New Codebase Scan</h3>
         <p class="text-sm text-dark-charcoal/60 mt-1 font-medium">Configure scanning parameters and upload files</p>
       </div>
-      
-      <button
-        type="button"
-        onclick={quickFill}
-        class="bg-bg-warm border border-accent-purple/30 text-accent-purple font-bold text-xs px-4 py-2 rounded-xl hover:bg-accent-purple hover:text-bg-warm transition-all cursor-pointer"
-      >
-        Autofill Sandbox Project
-      </button>
     </div>
 
     <form onsubmit={handleStartScan} class="space-y-6">

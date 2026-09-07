@@ -75,3 +75,36 @@ h1, h2, h3, h4, h5, h6 {
 ::-webkit-scrollbar-thumb:hover {
   background: #7C3AED;
 }
+
+/* Auth pages: column swap view transition */
+.vt-auth-brand {
+  view-transition-name: auth-brand;
+}
+
+.vt-auth-form {
+  view-transition-name: auth-form;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-group(auth-brand),
+  ::view-transition-group(auth-form) {
+    animation-duration: 0.5s;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  ::view-transition-old(auth-brand) {
+    animation-duration: 0.5s;
+  }
+
+  ::view-transition-new(auth-brand) {
+    animation-duration: 0.5s;
+  }
+
+  ::view-transition-old(auth-form) {
+    animation-duration: 0.5s;
+  }
+
+  ::view-transition-new(auth-form) {
+    animation-duration: 0.5s;
+  }
+}

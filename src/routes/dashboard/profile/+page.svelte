@@ -1,11 +1,13 @@
 <script>
-  import { appState } from '$lib/state.svelte';
+  import { appState, authErrorMessage } from '$lib/state.svelte';
+  import { supabase } from '$lib/supabase.js';
   import { goto } from '$app/navigation';
 
   // Profile fields state
-  let profileName = $state(appState.currentUser ? appState.currentUser.name : '');
-  let profileAvatar = $state(appState.currentUser ? appState.currentUser.avatar : '');
+  let profileName = $state('');
+  let profileAvatar = $state('');
   let updateSuccess = $state(false);
+  let updateError = $state('');
 
   // Password fields state
   let oldPassword = $state('');
@@ -13,19 +15,34 @@
   let confirmPassword = $state('');
   let passwordSuccess = $state(false);
   let passwordError = $state('');
+  let passwordLoading = $state(false);
 
   // Derived user statistics
   const userScansCount = $derived(appState.scans.length);
   const totalSecretsResolved = $derived(appState.scans.reduce((sum, s) => sum + s.secretsFound, 0));
 
-  function handleUpdateProfile(e) {
+  // Keep the forms in sync once the Supabase session/profile resolves (e.g. on refresh)
+  $effect(() => {
+    const user = appState.currentUser;
+    if (user) {
+      profileName = user.name || user.full_name || '';
+      profileAvatar = user.avatar || '';
+    }
+  });
+
+  async function handleUpdateProfile(e) {
     if (e) e.preventDefault();
-    appState.updateProfile(profileName, profileAvatar);
-    updateSuccess = true;
-    setTimeout(() => updateSuccess = false, 2000);
+    updateError = '';
+    try {
+      await appState.updateProfile(profileName, profileAvatar);
+      updateSuccess = true;
+      setTimeout(() => updateSuccess = false, 2000);
+    } catch (err) {
+      updateError = authErrorMessage(err);
+    }
   }
 
-  function handleChangePassword(e) {
+  async function handleChangePassword(e) {
     if (e) e.preventDefault();
     passwordError = '';
     passwordSuccess = false;
@@ -45,12 +62,34 @@
       return;
     }
 
-    // Success simulation
-    passwordSuccess = true;
-    oldPassword = '';
-    newPassword = '';
-    confirmPassword = '';
-    setTimeout(() => passwordSuccess = false, 3000);
+    passwordLoading = true;
+    try {
+      // Verify the current password against Supabase before changing it
+      const { error: verifyError } = await supabase.auth.signInWithPassword({
+        email: appState.currentUser?.email || '',
+        password: oldPassword
+      });
+      if (verifyError) {
+        passwordError = 'Current password is incorrect.';
+        return;
+      }
+
+      const { error: updateError2 } = await supabase.auth.updateUser({ password: newPassword });
+      if (updateError2) {
+        passwordError = authErrorMessage(updateError2);
+        return;
+      }
+
+      passwordSuccess = true;
+      oldPassword = '';
+      newPassword = '';
+      confirmPassword = '';
+      setTimeout(() => passwordSuccess = false, 3000);
+    } catch (err) {
+      passwordError = authErrorMessage(err);
+    } finally {
+      passwordLoading = false;
+    }
   }
 </script>
 
@@ -115,6 +154,12 @@
               class="w-full bg-bg-warm border border-dark-charcoal/15 px-4 py-2.5 rounded-xl text-sm font-semibold text-dark-charcoal focus:outline-none focus:border-accent-purple purple-glow-border transition-all"
             />
           </div>
+
+          {#if updateError}
+            <div class="bg-red-50 border-l-4 border-red-500 p-3 rounded-r-xl text-xs font-bold text-red-600 animate-in fade-in">
+              {updateError}
+            </div>
+          {/if}
 
           {#if updateSuccess}
             <div class="bg-green-50 border-l-4 border-green-500 p-3 rounded-r-xl text-xs font-bold text-green-600 animate-in fade-in">
@@ -194,9 +239,10 @@
           <div class="pt-4">
             <button
               type="submit"
-              class="bg-accent-purple text-bg-warm font-bold text-xs px-5 py-2.5 rounded-xl hover:bg-dark-charcoal hover:text-bg-warm transition-colors cursor-pointer shadow-sm"
+              disabled={passwordLoading}
+              class="bg-accent-purple text-bg-warm font-bold text-xs px-5 py-2.5 rounded-xl hover:bg-dark-charcoal hover:text-bg-warm transition-colors cursor-pointer shadow-sm disabled:opacity-50"
             >
-              Update Password
+              {passwordLoading ? 'Updating...' : 'Update Password'}
             </button>
           </div>
         </form>
