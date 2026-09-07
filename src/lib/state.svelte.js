@@ -1,6 +1,8 @@
 import { browser } from '$app/environment';
 import JSZip from 'jszip';
 import { analyzeContext, analyzeWithOllama, VERDICTS } from '$lib/ai-engine.js';
+import { supabase } from '$lib/supabase.js';
+import { loadDashboardData, persistScanResult, deleteScanFromSupabase } from '$lib/dashboard.js';
 
 export function maskPII(value, type) {
   if (!value) return value;
@@ -47,6 +49,14 @@ export function maskPII(value, type) {
 export function getMaskedCodeContext(codeContext, secretType) {
   if (!codeContext) return codeContext;
   return maskPII(codeContext, secretType);
+}
+
+// PII rules are noisy on obvious config keys (Google services JSON, AWS ARN account IDs).
+// Real secret scanners allowlist these; skipping them keeps the report focused on real hits.
+export function isPiiConfigKey(secretType, line) {
+  if (secretType !== 'Aadhaar Card Number' && secretType !== 'Phone Number PII') return false;
+  return /["']?(project_number|mobilesdk_app_id|client_id)["']?\s*[:=]\s*["']?/i.test(line) ||
+    /arn:aws:[^"\s]*\d{12}/.test(line);
 }
 
 // Secret Detection Engine predefined patterns (Module 3 + Module 5 specs)
@@ -140,6 +150,102 @@ const RULES = [
     bestPractice: 'Expose webhook integrations through backends, rather than embedding client endpoints.'
   },
   {
+    name: 'Stripe API Key',
+    regex: /\b((sk|rk)_(live|test)_[0-9a-zA-Z]{16,24})\b/g,
+    severity: 'Critical',
+    weight: 10,
+    fix: 'Revoke the leaked Stripe key immediately in the Stripe Dashboard. Regenerate with restricted scopes and store it in a secrets manager.',
+    bestPractice: 'Use Stripe CLI or server-side SDKs with short-lived restricted keys loaded from environment variables.'
+  },
+  {
+    name: 'Telegram Bot Token',
+    regex: /\b(\d{8,10}:[A-Za-z0-9_-]{35})\b/g,
+    severity: 'Critical',
+    weight: 10,
+    fix: 'Use BotFather to revoke the leaked bot token and generate a new one. Restrict the bot to a private group and audit recent activity.',
+    bestPractice: 'Load bot tokens via environment variables and rotate them on a schedule.'
+  },
+  {
+    name: 'Discord Webhook URL',
+    regex: /https:\/\/discord(app)?\.com\/api\/webhooks\/\d{16,19}\/[A-Za-z0-9_-]{60,}/g,
+    severity: 'Critical',
+    weight: 10,
+    fix: 'Delete the exposed Discord webhook from the channel settings and recreate it with a new random URL.',
+    bestPractice: 'Route Discord notifications through a backend proxy that keeps webhook URLs out of client code.'
+  },
+  {
+    name: 'Slack API Token',
+    regex: /\b(xox[baprs]-[0-9A-Za-z-]{10,62})\b/g,
+    severity: 'Critical',
+    weight: 10,
+    fix: 'Revoke the leaked Slack token in the Slack App dashboard and reissue scoped tokens via OAuth.',
+    bestPractice: 'Use Slack Apps with minimal OAuth scopes and never embed tokens in client bundles.'
+  },
+  {
+    name: 'Twilio API Key',
+    regex: /\b(SK[0-9a-fA-F]{32})\b/g,
+    severity: 'High',
+    weight: 9,
+    fix: 'Delete the Twilio API key in the Twilio Console and rotate credentials immediately.',
+    bestPractice: 'Store Twilio credentials server-side and use Twilio Functions or Key Vault lookups.'
+  },
+  {
+    name: 'Azure Storage Account Key',
+    regex: /\b(?:AccountKey|SharedAccessKey)=([a-zA-Z0-9+/=]{80,})\b/g,
+    severity: 'High',
+    weight: 9,
+    fix: 'Rotate the Azure Storage account key in the Azure Portal and regenerate SAS tokens with minimal permissions.',
+    bestPractice: 'Use Azure Managed Identity or short-lived SAS tokens instead of static account keys.'
+  },
+  {
+    name: 'Google OAuth Client Secret',
+    regex: /\b(GOCSPX-[A-Za-z0-9_-]{20,})\b/g,
+    severity: 'High',
+    weight: 9,
+    fix: 'Rotate the Google OAuth client secret in Google Cloud Console and restrict the client to approved redirect URIs.',
+    bestPractice: 'Keep OAuth client secrets server-side and never ship them in mobile or web clients.'
+  },
+  {
+    name: 'MongoDB Connection String',
+    regex: /\b(mongodb(\+srv)?:\/\/[^\s"']+:[^\s"']+@[^\s"']+)\b/g,
+    severity: 'Critical',
+    weight: 10,
+    fix: 'Rotate the MongoDB user password immediately and restrict network access with IP allowlists.',
+    bestPractice: 'Use MongoDB Atlas secrets or IAM authentication and inject the URI from environment variables.'
+  },
+  {
+    name: 'PostgreSQL/MySQL Connection URL',
+    regex: /\b((postgres|postgresql|mysql):\/\/[^\s"']+:[^\s"']+@[^\s"']+)\b/g,
+    severity: 'Critical',
+    weight: 10,
+    fix: 'Rotate the database credentials and add the endpoint to a private subnet with strict firewall rules.',
+    bestPractice: 'Prefer IAM-based database authentication and load connection URLs from secrets managers.'
+  },
+  {
+    name: 'GitLab Personal Access Token',
+    regex: /\b(glpat-[A-Za-z0-9_-]{20})\b/g,
+    severity: 'High',
+    weight: 9,
+    fix: 'Revoke the GitLab personal access token in GitLab User Settings and replace it with a scoped project token.',
+    bestPractice: 'Use GitLab CI job tokens or short-lived OAuth tokens instead of personal access tokens.'
+  },
+  {
+    name: 'npm Access Token',
+    regex: /\b(npm_[A-Za-z0-9]{36})\b/g,
+    severity: 'High',
+    weight: 9,
+    fix: 'Revoke the npm access token at npmjs.com/settings/tokens and reissue with publish-only scope.',
+    bestPractice: 'Publish via CI with per-release granular access tokens, never committed to source.'
+  },
+  {
+    name: 'HashiCorp Vault Token',
+    regex: /\b(hvs\.[A-Za-z0-9_-]{24,})\b/g,
+    severity: 'High',
+    weight: 9,
+    fix: 'Revoke the Vault token using vault token revoke and renew it through a short-lived auth method.',
+    bestPractice: 'Use Kubernetes/Vault agent short-lived tokens and never write root tokens to disk.'
+  },
+  {
     name: 'Email Address PII',
     regex: /\b([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z0-9.-]+)\b/g,
     severity: 'Low',
@@ -157,431 +263,198 @@ const RULES = [
   }
 ];
 
-// Default mock data for high-fidelity demonstration
-const DEFAULT_SCANS = [
-  {
-    id: 'scan-1',
-    projectName: 'quantum-payment-gateway',
-    projectDescription: 'Core payment processing backend with microservices, AWS integrations, and Stripe webhooks.',
-    date: '2026-07-17',
-    filesScanned: 142,
-    secretsFound: 8,
-    riskScore: 84,
-    criticalCount: 3,
-    highCount: 2,
-    mediumCount: 2,
-    lowCount: 1,
-    findings: [
-      {
-        id: 'f-1',
-        file: 'config/aws.js',
-        line: 14,
-        secretType: 'AWS Client Access Key',
-        severity: 'Critical',
-        status: 'Active',
-        codeContext: 'const AWS_SECRET_ACCESS_KEY = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY";',
-        decision: 'Leak Confirmed',
-        confidence: 99,
-        reason: 'Matches standard AWS Client Secret patterns. Exposed in plaintext inside the configuration file rather than being loaded from secure environment variables or vault.',
-        fix: 'Move AWS_SECRET_ACCESS_KEY to secure environment variables or use AWS Secrets Manager. Revoke and rotate the exposed credentials immediately.',
-        bestPractice: 'Never commit raw secrets. Use a secrets manager and run git-secrets or similar pre-commit hooks to scan files before staging.'
-      },
-      {
-        id: 'f-2',
-        file: 'utils/notifications.js',
-        line: 38,
-        secretType: 'Slack Webhook URL',
-        severity: 'Critical',
-        status: 'Active',
-        codeContext: 'const SLACK_WEBHOOK = "https://hooks.slack.invalid/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX";',
-        decision: 'Leak Confirmed',
-        confidence: 96,
-        reason: 'Contains an active Slack webhook URL that could allow unauthorized actors to post spam or intercept logging messages in internal channels.',
-        fix: 'Rotate the Slack webhook URL immediately and load it from environment variables or secure storage.',
-        bestPractice: 'Restrict webhook URLs at the provider level and encrypt any integration links.'
-      },
-      {
-        id: 'f-3',
-        file: 'database/connection.py',
-        line: 9,
-        secretType: 'Database Password',
-        severity: 'Critical',
-        status: 'Active',
-        codeContext: 'db_conn = mysql.connect(host="prod-db.quantum.internal", user="admin", password="SuperSecurePassword123!")',
-        decision: 'Leak Confirmed',
-        confidence: 94,
-        reason: 'Plaintext database connection string containing administration credentials pointing to an internal production endpoint.',
-        fix: 'Replace the hardcoded password with an IAM database authentication plugin or load via configuration properties.',
-        bestPractice: 'Employ temporary credentials or zero-trust network credentials rather than hardcoded usernames and passwords.'
-      },
-      {
-        id: 'f-4',
-        file: 'routes/billing.js',
-        line: 22,
-        secretType: 'Credit Card Number',
-        severity: 'High',
-        status: 'Active',
-        codeContext: 'const stripe = require(\'stripe\')(\'sk_test_51Nx...8z9L\');',
-        decision: 'Test Key Leaked',
-        confidence: 92,
-        reason: 'Although the key is for a test environment (sk_test_), committing credentials to code repositories violates policies and exposes testing setups.',
-        fix: 'Replace the secret key with process.env.STRIPE_SECRET_KEY and rotate the Stripe test environment keys.',
-        bestPractice: 'Test API keys must be isolated and loaded similarly to production secrets.'
-      },
-      {
-        id: 'f-5',
-        file: 'scripts/deploy.sh',
-        line: 15,
-        secretType: 'SSH/RSA Private Key',
-        severity: 'High',
-        status: 'Active',
-        codeContext: 'echo "-----BEGIN RSA PRIVATE KEY-----"\necho "MIIEowIBAAKCAQEA0yG9..."\necho "-----END RSA PRIVATE KEY-----" > /tmp/id_rsa;',
-        decision: 'Leak Confirmed',
-        confidence: 98,
-        reason: 'Hardcoded SSH private key block utilized in deployment routine. Anyone with repository read access can obtain ssh access to the host.',
-        fix: 'Use runner-level SSH credentials (e.g. GitHub secrets) and inject them securely into the ssh-agent at runtime.',
-        bestPractice: 'Never store raw keys or certificates in script files.'
-      },
-      {
-        id: 'f-6',
-        file: 'public/index.html',
-        line: 45,
-        secretType: 'Google API Key',
-        severity: 'Medium',
-        status: 'Active',
-        codeContext: '<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA1...&callback=initMap" async defer></script>',
-        decision: 'Exposed API Key',
-        confidence: 82,
-        reason: 'Google Maps API key is hardcoded directly in a public HTML template. Low danger of privilege escalation, but can lead to quota theft.',
-        fix: 'Go to Google Cloud Console and configure strict HTTP referrer restrictions and API restrictions on this key.',
-        bestPractice: 'Restrict client-side API keys strictly to target hosts and domain endpoints.'
-      },
-      {
-        id: 'f-7',
-        file: 'middleware/auth.js',
-        line: 12,
-        secretType: 'JWT Secret Key',
-        severity: 'Medium',
-        status: 'Active',
-        codeContext: 'const token = jwt.sign({ id: user.id }, "temp_secret_key_123");',
-        decision: 'Weak Secret Key',
-        confidence: 91,
-        reason: 'Weak hardcoded secret key used for signing web tokens. Can allow offline brute-force attacks to forge administrator tokens.',
-        fix: 'Load a strong, cryptographically secure signing secret from environment variables.',
-        bestPractice: 'Use signing secrets that are rotated periodically and have a high entropy.'
-      },
-      {
-        id: 'f-8',
-        file: 'tests/api.test.js',
-        line: 5,
-        secretType: 'Email Address PII',
-        severity: 'Low',
-        status: 'Active',
-        codeContext: 'const TARGET_URL = "http://dev-sandbox-3.internal.quantum-pay.io:8080/v1";',
-        decision: 'Information Exposure',
-        confidence: 75,
-        reason: 'Hardcoded internal staging URL. Exposes internal DNS structures and development ports.',
-        fix: 'Set test targets dynamically using test configuration files or environment variables.',
-        bestPractice: 'Abstract environment-specific endpoints from static testing code.'
-      }
-    ]
-  },
-  {
-    id: 'scan-2',
-    projectName: 'microservice-auth-helper',
-    projectDescription: 'Authentication helper for microservice token exchange. Written in Go.',
-    date: '2026-07-15',
-    filesScanned: 34,
-    secretsFound: 0,
-    riskScore: 0,
-    criticalCount: 0,
-    highCount: 0,
-    mediumCount: 0,
-    lowCount: 0,
-    findings: []
-  },
-  {
-    id: 'scan-3',
-    projectName: 'legacy-php-frontend',
-    projectDescription: 'Legacy customer billing portal and admin backend dashboard.',
-    date: '2026-06-10',
-    filesScanned: 94,
-    secretsFound: 2,
-    riskScore: 95,
-    criticalCount: 2,
-    highCount: 0,
-    mediumCount: 0,
-    lowCount: 0,
-    findings: [
-      {
-        id: 'f-301',
-        file: 'db.php',
-        line: 4,
-        secretType: 'Database Password',
-        severity: 'Critical',
-        status: 'Active',
-        codeContext: 'define("DB_PASSWORD", "mysql_prod_root_pass_9981");',
-        decision: 'Leak Confirmed',
-        confidence: 98,
-        reason: 'Hardcoded MySQL production database connection credentials.',
-        fix: 'Load credential constants from an environment configuration helper.',
-        bestPractice: 'Use vault storage for database keys.'
-      },
-      {
-        id: 'f-302',
-        file: 'wp-config.php',
-        line: 25,
-        secretType: 'JWT Secret Key',
-        severity: 'High',
-        status: 'Active',
-        codeContext: 'define(\'AUTH_KEY\',         \' d-f09s8f09safs8df7sdf723rn23r...\');',
-        decision: 'Leak Confirmed',
-        confidence: 90,
-        reason: 'Standard WordPress security key/salt exposed in main web config.',
-        fix: 'Rotate standard WordPress keys and load using server environment variables.',
-        bestPractice: 'Always inject CMS credentials outside of tracked codebase files.'
-      }
-    ]
-  },
-  {
-    id: 'scan-4',
-    projectName: 'react-native-app',
-    projectDescription: 'Mobile companion app with push notifications and maps.',
-    date: '2026-07-02',
-    filesScanned: 88,
-    secretsFound: 1,
-    riskScore: 48,
-    criticalCount: 0,
-    highCount: 1,
-    mediumCount: 0,
-    lowCount: 0,
-    findings: [
-      {
-        id: 'f-401',
-        file: 'app.json',
-        line: 18,
-        secretType: 'JWT Secret Key',
-        severity: 'High',
-        status: 'Active',
-        codeContext: '"expoToken": "exp_token_abcf9192451bcad12920239129"',
-        decision: 'Leak Confirmed',
-        confidence: 95,
-        reason: 'Expo authentication token included directly inside application manifest config.',
-        fix: 'Inject Expo credentials during build/publish using environment variables or EAS secrets.',
-        bestPractice: 'Configure CI variables for mobile deployment keys.'
-      }
-    ]
+// Default avatar per role (profiles table has no avatar column; kept in auth metadata/UI)
+function defaultAvatar(role) {
+  return role === 'Admin'
+    ? 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'
+    : 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150';
+}
+
+export function authErrorMessage(error) {
+  if (!error) return 'Something went wrong. Please try again.';
+  const message = (error.message || '').toLowerCase();
+  const status = error.status;
+
+  if (message.includes('invalid login credentials') || message.includes('invalid email or password')) {
+    return 'Invalid email or password. Please check your credentials.';
   }
-];
+  if (message.includes('email not confirmed')) {
+    return 'Please confirm your email address before signing in.';
+  }
+  if (message.includes('user already registered') || message.includes('already registered')) {
+    return 'An account with this email already exists. Please sign in instead.';
+  }
+  if (message.includes('password should be at least') || message.includes('weak password')) {
+    return 'Password must be at least 6 characters long.';
+  }
+  if (message.includes('failed to fetch') || message.includes('load failed') || message.includes('network')) {
+    return 'Network error. Please check your connection and try again.';
+  }
+  if (message.includes('auth session missing') || message.includes('session expired') || message.includes('jwt expired')) {
+    return 'Your session has expired. Please sign in again.';
+  }
+  if (status === 429 || message.includes('too many requests')) {
+    return 'Too many attempts. Please wait a moment and try again.';
+  }
+  return error.message || 'Something went wrong. Please try again.';
+}
+
+
 
 class AppState {
   currentUser = $state(null);
+  authLoading = $state(true);
   scans = $state([]);
+  projects = $state([]);
+  selectedProjectId = $state(null);
+  dashboardLoading = $state(true);
+  dashboardError = $state('');
   activeScan = $state({
     status: 'idle', // idle, scanning, done
     progress: 0,
     currentStep: '',
     project: null
   });
-  selectedScanId = $state('scan-1');
-  theme = $state('dark');
-  allUsers = $state([]);
-  auditLog = $state([]);
-  systemSettings = $state({
-    scanAutoDelete: false,
-    maxUsers: 50,
-    requireMfa: false,
-    allowRegistration: true,
-    defaultRole: 'Developer',
-    scanRetentionDays: 90,
-    emailNotifications: true,
-    criticalAlertThreshold: 3
-  });
+  selectedScanId = $state(null);
+  users = $state([]);
 
   constructor() {
     this.loadState();
-  }
-
-  // --- Audit Log ---
-  addAuditEntry(action, details, user = null) {
-    const entry = {
-      id: 'audit-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
-      timestamp: new Date().toISOString(),
-      action,
-      details,
-      user: user || this.currentUser?.name || 'System',
-      role: user ? 'system' : (this.currentUser?.role || 'system')
-    };
-    this.auditLog = [entry, ...this.auditLog];
-    this.saveAuditLog();
-  }
-
-  saveAuditLog() {
-    if (!browser) return;
-    localStorage.setItem('secureguard_audit_log', JSON.stringify(this.auditLog));
-  }
-
-  loadAuditLog() {
-    if (!browser) return;
-    const saved = localStorage.getItem('secureguard_audit_log');
-    if (saved) {
-      try { this.auditLog = JSON.parse(saved); } catch (e) { this.auditLog = []; }
-    } else {
-      this.auditLog = [
-        { id: 'audit-seed-1', timestamp: '2026-08-25T10:15:00Z', action: 'User Login', details: 'Admin user logged in successfully', user: 'Admin', role: 'admin' },
-        { id: 'audit-seed-2', timestamp: '2026-08-25T11:30:00Z', action: 'Scan Completed', details: 'quantum-payment-gateway scan finished with 8 findings', user: 'Admin', role: 'admin' },
-        { id: 'audit-seed-3', timestamp: '2026-08-26T09:00:00Z', action: 'User Registered', details: 'New developer account created: john@dev.io', user: 'System', role: 'system' },
-        { id: 'audit-seed-4', timestamp: '2026-08-26T14:22:00Z', action: 'Role Changed', details: 'User role updated from Developer to Admin', user: 'Admin', role: 'admin' },
-        { id: 'audit-seed-5', timestamp: '2026-08-27T08:45:00Z', action: 'Settings Updated', details: 'Email notifications enabled', user: 'Admin', role: 'admin' },
-        { id: 'audit-seed-6', timestamp: '2026-08-27T10:10:00Z', action: 'User Deleted', details: 'Removed inactive user account', user: 'Admin', role: 'admin' },
-        { id: 'audit-seed-7', timestamp: '2026-08-27T11:00:00Z', action: 'Scan Started', details: 'legacy-php-frontend scan initiated by developer', user: 'John Developer', role: 'developer' },
-        { id: 'audit-seed-8', timestamp: '2026-08-27T12:30:00Z', action: 'Critical Alert', details: '3 critical findings detected in quantum-payment-gateway', user: 'System', role: 'system' }
-      ];
-      this.saveAuditLog();
+    if (browser) {
+      this.initAuth();
     }
-  }
-
-  // --- System Settings ---
-  saveSystemSettings() {
-    if (!browser) return;
-    localStorage.setItem('secureguard_settings', JSON.stringify(this.systemSettings));
-  }
-
-  loadSystemSettings() {
-    if (!browser) return;
-    const saved = localStorage.getItem('secureguard_settings');
-    if (saved) {
-      try { this.systemSettings = JSON.parse(saved); } catch (e) {}
-    }
-  }
-
-  updateSystemSetting(key, value) {
-    this.systemSettings[key] = value;
-    this.saveSystemSettings();
-    this.addAuditEntry('Settings Updated', `${key} changed to ${value}`);
-  }
-
-  // --- Developer Activity (derived from scans + users) ---
-  get developerActivity() {
-    const devs = this.allUsers.filter(u => u.role === 'Developer');
-    return devs.map(dev => {
-      const devScans = this.scans.filter(s => s.userId === dev.id || !s.userId);
-      const totalFindings = devScans.reduce((sum, s) => sum + (s.secretsFound || 0), 0);
-      const criticalFindings = devScans.reduce((sum, s) => sum + (s.criticalCount || 0), 0);
-      return {
-        ...dev,
-        scanCount: devScans.length || Math.floor(Math.random() * 5) + 1,
-        totalFindings: totalFindings || Math.floor(Math.random() * 10),
-        criticalFindings: criticalFindings || Math.floor(Math.random() * 3),
-        lastActive: dev.lastLogin || dev.createdAt || '2026-08-27',
-        status: 'active'
-      };
-    });
-  }
-
-  // --- Recent Alerts (critical findings across all scans) ---
-  get recentAlerts() {
-    const alerts = [];
-    for (const scan of this.scans) {
-      if (scan.findings) {
-        for (const f of scan.findings) {
-          if (f.severity === 'Critical' || f.severity === 'High') {
-            alerts.push({
-              ...f,
-              scanProject: scan.projectName,
-              scanDate: scan.date
-            });
-          }
-        }
-      }
-    }
-    return alerts.sort((a, b) => {
-      const sevOrder = { Critical: 0, High: 1 };
-      return (sevOrder[a.severity] ?? 2) - (sevOrder[b.severity] ?? 2);
-    });
   }
 
   loadState() {
     if (!browser) return;
 
-    // Load theme
-    const savedTheme = localStorage.getItem('secureguard_theme');
-    if (savedTheme) {
-      this.theme = savedTheme;
-    }
-    this.applyTheme();
+    // Remove legacy localStorage auth + scan artifacts from the previous demo
+    // build. Supabase (public.projects / scans / findings) is now the source of
+    // truth for all dashboard data.
+    localStorage.removeItem('leak_detection_user');
+    localStorage.removeItem('leak_detection_users');
+    localStorage.removeItem('leak_detection_scans');
+    localStorage.removeItem('leak_detection_selected_scan');
 
-    // Load active user
-    const savedUser = localStorage.getItem('leak_detection_user');
-    if (savedUser) {
-      try {
-        this.currentUser = JSON.parse(savedUser);
-      } catch (e) {
+    this.selectedScanId = null;
+    this.selectedProjectId = null;
+  }
+
+  async refreshDashboard() {
+    if (!browser) return;
+    if (!this.currentUser) return;
+    this.dashboardLoading = true;
+    this.dashboardError = '';
+    try {
+      const records = await loadDashboardData();
+      records.forEach(r => {
+        r.scannedBy = (this.currentUser && this.currentUser.email) || '';
+      });
+      this.scans = records;
+      this.projects = records
+        .map(r => ({ id: r.projectId, project_name: r.projectName, status: r.status }))
+        .filter((p, i, arr) => arr.findIndex(x => x.id === p.id) === i);
+
+      // Keep a valid default selection: most recent completed scan, else latest.
+      if (!this.selectedScanId || !this.scans.some(s => s.id === this.selectedScanId)) {
+        const fallback = this.scans.find(s => s.default) || this.scans[0] || null;
+        this.selectedScanId = fallback ? fallback.id : null;
+        this.selectedProjectId = fallback ? fallback.projectId : null;
+      } else {
+        const current = this.scans.find(s => s.id === this.selectedScanId);
+        this.selectedProjectId = current ? current.projectId : null;
+      }
+    } catch (err) {
+      console.error('Failed to load dashboard data:', err);
+      this.dashboardError = 'Unable to load your scanning data. Please try again.';
+      this.scans = [];
+      this.projects = [];
+      this.selectedScanId = null;
+      this.selectedProjectId = null;
+    } finally {
+      this.dashboardLoading = false;
+    }
+  }
+
+  async initAuth() {
+    // Restore a persisted session so refreshes keep the user logged in
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      await this.setCurrentUser(session.user);
+      await this.refreshDashboard();
+    } else {
+      this.currentUser = null;
+      this.users = [];
+    }
+    this.authLoading = false;
+
+    // Keep session/profile reactive across sign-in, sign-out and token refresh
+    supabase.auth.onAuthStateChange((event, session) => {
+      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') && session?.user) {
+        this.setCurrentUser(session.user).then(() => this.refreshDashboard());
+      } else if (event === 'SIGNED_OUT') {
         this.currentUser = null;
+        this.users = [];
+        this.scans = [];
+        this.projects = [];
+        this.selectedScanId = null;
+        this.selectedProjectId = null;
       }
-    }
+    });
+  }
 
-    // Load scans
-    const savedScans = localStorage.getItem('leak_detection_scans');
-    if (savedScans) {
-      try {
-        this.scans = JSON.parse(savedScans);
-      } catch (e) {
-        this.scans = [...DEFAULT_SCANS];
+  async setCurrentUser(authUser) {
+    let fullName = authUser.user_metadata?.full_name || '';
+    const role = authUser.user_metadata?.role || 'Developer';
+
+    // Fetch the real profile row (id = auth.uid()) for the latest full_name/email
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('full_name, email')
+        .eq('id', authUser.id)
+        .maybeSingle();
+      if (!error && profile?.full_name) {
+        fullName = profile.full_name;
       }
-    } else {
-      this.scans = [...DEFAULT_SCANS];
-      this.saveScans();
+    } catch (e) {
+      // Profile row may not exist yet; fall back to auth metadata
     }
 
-    // Load selected scan ID
-    const savedSelected = localStorage.getItem('leak_detection_selected_scan');
-    if (savedSelected) {
-      this.selectedScanId = savedSelected;
-    }
+    this.currentUser = {
+      id: authUser.id,
+      name: fullName || authUser.email?.split('@')[0] || 'User',
+      full_name: fullName,
+      email: authUser.email || '',
+      role,
+      avatar: authUser.user_metadata?.avatar || defaultAvatar(role)
+    };
 
-    // Load audit log
-    this.loadAuditLog();
-
-    // Load system settings
-    this.loadSystemSettings();
+    // RLS exposes only the authenticated user's own profile, so the admin
+    // user registry mirrors the current user rather than a shared user list.
+    this.users = [
+      {
+        name: this.currentUser.name,
+        email: this.currentUser.email,
+        role: this.currentUser.role,
+        avatar: this.currentUser.avatar,
+        registeredAt: authUser.created_at ? authUser.created_at.split('T')[0] : new Date().toISOString().split('T')[0]
+      }
+    ];
   }
 
-  applyTheme() {
-    if (!browser) return;
-    if (this.theme === 'light') {
-      document.body.classList.add('light');
-    } else {
-      document.body.classList.remove('light');
+  async refreshProfile() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await this.setCurrentUser(user);
     }
-  }
-
-  toggleTheme() {
-    this.theme = this.theme === 'dark' ? 'light' : 'dark';
-    if (browser) {
-      localStorage.setItem('secureguard_theme', this.theme);
-    }
-    this.applyTheme();
-  }
-
-  saveUser() {
-    if (!browser) return;
-    if (this.currentUser) {
-      localStorage.setItem('leak_detection_user', JSON.stringify(this.currentUser));
-    } else {
-      localStorage.removeItem('leak_detection_user');
-    }
-  }
-
-  saveScans() {
-    if (!browser) return;
-    localStorage.setItem('leak_detection_scans', JSON.stringify(this.scans));
   }
 
   setSelectedScan(id) {
     this.selectedScanId = id;
-    if (browser) {
-      localStorage.setItem('leak_detection_selected_scan', id);
+    const record = this.scans.find(s => s.id === id);
+    if (record) {
+      this.selectedProjectId = record.projectId;
     }
   }
 
@@ -590,117 +463,67 @@ class AppState {
   }
 
   async login(email, password) {
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        this.currentUser = data.user;
-        this.saveUser();
-        this.addAuditEntry('User Login', `${data.user.email} logged in successfully`);
-        return true;
-      }
-      return false;
-    } catch (err) {
-      return false;
-    }
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    await this.setCurrentUser(data.session.user);
+    return this.currentUser;
   }
 
-  async register(name, email, username, password) {
-    try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, username })
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        this.currentUser = data.user;
-        this.saveUser();
-        this.addAuditEntry('User Registered', `New account created: ${email}`);
-        return { success: true };
+  async register(fullName, email, password, role) {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName,
+          role: role || 'Developer'
+        }
       }
-      return { success: false, error: data.error };
-    } catch (err) {
-      return { success: false, error: 'Registration failed. Please try again.' };
+    });
+    if (error) throw error;
+    // The DB trigger on auth.users creates the profiles row automatically;
+    // we must NOT create it manually here.
+    if (data.session) {
+      await this.setCurrentUser(data.session.user);
     }
+    return data;
   }
 
-  logout() {
+  async deleteUser(email) {
+    // Deleting Supabase auth users requires the service_role/admin API, which is
+    // intentionally never exposed in the frontend. Kept as a guarded no-op.
+    return false;
+  }
+
+  async logout() {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
     this.currentUser = null;
-    this.saveUser();
+    this.users = [];
   }
 
-  updateProfile(name, avatar, dob) {
-    if (this.currentUser) {
-      this.currentUser.name = name;
-      this.currentUser.avatar = avatar;
-      if (dob !== undefined) this.currentUser.dob = dob;
-      this.saveUser();
-    }
+  async updateProfile(name, avatar) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    await supabase.from('profiles').update({ full_name: name }).eq('id', user.id);
+    await supabase.auth.updateUser({
+      data: { full_name: name, avatar: avatar || defaultAvatar(this.currentUser?.role) }
+    });
+    await this.setCurrentUser(user);
   }
 
-  async fetchAllUsers() {
+  async deleteScan(scanId) {
     try {
-      const response = await fetch('/api/admin/users');
-      const data = await response.json();
-      if (data.success) {
-        this.allUsers = data.users;
-      }
+      await deleteScanFromSupabase(scanId);
     } catch (err) {
-      console.error('Failed to fetch users:', err);
+      console.error('Failed to delete scan:', err);
     }
-  }
-
-  async deleteUser(userId) {
-    try {
-      const response = await fetch(`/api/admin/users?id=${userId}`, { method: 'DELETE' });
-      const data = await response.json();
-      if (data.success) {
-        this.allUsers = this.allUsers.filter(u => u.id !== userId);
-        this.addAuditEntry('User Deleted', `User account removed: ${userId}`);
-      }
-      return data;
-    } catch (err) {
-      return { success: false, error: 'Failed to delete user.' };
-    }
-  }
-
-  async updateUserRole(userId, role) {
-    try {
-      const response = await fetch('/api/admin/users', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: userId, role })
-      });
-      const data = await response.json();
-      if (data.success) {
-        const idx = this.allUsers.findIndex(u => u.id === userId);
-        if (idx !== -1) this.allUsers[idx] = data.user;
-        this.addAuditEntry('Role Changed', `User role updated to ${role}: ${userId}`);
-      }
-      return data;
-    } catch (err) {
-      return { success: false, error: 'Failed to update user.' };
-    }
-  }
-
-  deleteScan(scanId) {
-    this.scans = this.scans.filter(s => s.id !== scanId);
-    this.saveScans();
-    if (this.selectedScanId === scanId) {
-      if (this.scans.length > 0) {
-        this.setSelectedScan(this.scans[0].id);
-      } else {
-        this.selectedScanId = null;
-      }
+    await this.refreshDashboard();
+    if (this.scans.length > 0) {
+      this.setSelectedScan(this.scans[0].id);
+    } else {
+      this.selectedScanId = null;
+      this.selectedProjectId = null;
     }
   }
 
@@ -750,7 +573,7 @@ class AppState {
     }, intervalTime);
   }
 
-  completeSimulatedScan(projectName, projectDescription, options) {
+  async completeSimulatedScan(projectName, projectDescription, options) {
     const findings = [
       {
         id: 'f-new-1',
@@ -812,35 +635,31 @@ class AppState {
     const score = criticalCount * 25 + highCount * 15;
     const finalRiskScore = Math.min(score, 100);
 
-    const newScan = {
-      id: 'scan-' + Date.now(),
-      projectName,
-      projectDescription: projectDescription || 'No description provided.',
-      date: new Date().toISOString().split('T')[0],
-      filesScanned: 45,
-      secretsFound,
-      riskScore: finalRiskScore,
-      criticalCount,
-      highCount,
-      mediumCount,
-      lowCount,
-      findings
-    };
+    const riskLevel = finalRiskScore >= 75 ? 'Critical' : finalRiskScore >= 50 ? 'High' : finalRiskScore >= 25 ? 'Medium' : 'Low';
 
-    this.scans = [newScan, ...this.scans];
-    this.saveScans();
-    this.setSelectedScan(newScan.id);
+    try {
+      const { scanId } = await persistScanResult({
+        projectName,
+        findings,
+        filesScanned: 45,
+        riskScore: finalRiskScore,
+        riskLevel
+      });
+      await this.refreshDashboard();
+      this.setSelectedScan(scanId);
+    } catch (err) {
+      console.error('Failed to persist scan result:', err);
+      this.dashboardError = 'Scan completed, but saving the results to the database failed.';
+    }
 
     this.activeScan.progress = 100;
     this.activeScan.status = 'done';
-
-    this.addAuditEntry('Scan Completed', `${projectName} simulated scan finished with ${secretsFound} findings`);
   }
 
   // Active Real ZIP Scanner (Module 1 to 6)
   async triggerScan(projectName, projectDescription, file, options) {
-    if (!file || file.name === 'payment-microservice-node.zip') {
-      // Fall back to simulation if no file or preview sandbox zip is selected
+    if (!file) {
+      // Fall back to simulation when no archive was selected
       this.triggerSimulatedScan(projectName, projectDescription, options);
       return;
     }
@@ -912,6 +731,7 @@ class AppState {
             
             if (matches.length > 0) {
               for (const match of matches) {
+                if (isPiiConfigKey(rule.name, line)) continue;
                 // Compile code context (Module 4)
                 const startIdx = Math.max(0, i - 20);
                 const endIdx = Math.min(lines.length - 1, i + 20);
@@ -1008,29 +828,25 @@ class AppState {
       
       const finalRiskScore = Math.min(totalRatingWeight, 100);
 
-      const newScan = {
-        id: 'scan-' + Date.now(),
-        projectName,
-        projectDescription: projectDescription || 'No description provided.',
-        date: new Date().toISOString().split('T')[0],
-        filesScanned: totalFiles,
-        secretsFound: findings.length,
-        riskScore: finalRiskScore,
-        criticalCount,
-        highCount,
-        mediumCount,
-        lowCount,
-        findings
-      };
+      const riskLevel = finalRiskScore >= 75 ? 'Critical' : finalRiskScore >= 50 ? 'High' : finalRiskScore >= 25 ? 'Medium' : 'Low';
 
-      this.scans = [newScan, ...this.scans];
-      this.saveScans();
-      this.setSelectedScan(newScan.id);
+      try {
+        const { scanId } = await persistScanResult({
+          projectName,
+          findings,
+          filesScanned: totalFiles,
+          riskScore: finalRiskScore,
+          riskLevel
+        });
+        await this.refreshDashboard();
+        this.setSelectedScan(scanId);
+      } catch (err) {
+        console.error('Failed to persist scan result:', err);
+        this.dashboardError = 'Scan completed, but saving the results to the database failed.';
+      }
 
       this.activeScan.progress = 100;
       this.activeScan.status = 'done';
-
-      this.addAuditEntry('Scan Completed', `${projectName} scan finished with ${secretsFound} findings`);
 
     } catch (err) {
       console.error(err);

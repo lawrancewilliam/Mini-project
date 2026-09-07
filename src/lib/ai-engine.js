@@ -1,36 +1,15 @@
+import { ML_TRAINING_DATA } from './training-data.js';
+import { REFERENCE_DATA } from './reference-data.js';
+
+const REF_EXACT = new Set(REFERENCE_DATA.exact);
+const REF_HEADTAIL = new Set(REFERENCE_DATA.headTail);
+
 export const VERDICTS = {
   LEAK_CONFIRMED: 'Leak Confirmed',
   SUSPICIOUS: 'Suspicious',
   TEST_DATA: 'Test Data',
   FALSE_POSITIVE: 'False Positive'
 };
-
-const ML_TRAINING_DATA = [
-  { text: 'password = "real_password_123"', label: 'LEAK_CONFIRMED', confidence: 95 },
-  { text: 'const API_KEY = "sk-prod-abc123xyz789"', label: 'LEAK_CONFIRMED', confidence: 92 },
-  { text: 'db_pass = "SuperSecretPass123!"', label: 'LEAK_CONFIRMED', confidence: 94 },
-  { text: 'api_key = "AIzaSyTestKey1234567890abcdefghijklmnopqrstuvwxyz"', label: 'LEAK_CONFIRMED', confidence: 90 },
-  { text: 'AWS_SECRET_ACCESS_KEY = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"', label: 'LEAK_CONFIRMED', confidence: 98 },
-  { text: 'const password = "password"; // test', label: 'TEST_DATA', confidence: 30 },
-  { text: 'const API_KEY = "example_api_key_value"', label: 'TEST_DATA', confidence: 40 },
-  { text: 'const TEST_KEY = "your_api_key_here"', label: 'FALSE_POSITIVE', confidence: 20 },
-  { text: '// password = "placeholder_value"', label: 'FALSE_POSITIVE', confidence: 15 },
-  { text: 'const API_KEY = "change_me_to_your_key"', label: 'FALSE_POSITIVE', confidence: 18 },
-  { text: 'const TEST_SECRET = "mock_secret_value_123"', label: 'TEST_DATA', confidence: 35 },
-  { text: 'const API_KEY = "AIzaSyExampleTestKey1234567890abcdefg"', label: 'TEST_DATA', confidence: 45 },
-  { text: 'const DB_PASS = "dev_password_123"', label: 'TEST_DATA', confidence: 50 },
-  { text: 'const SECRET_KEY = "sk_test_1234567890abcdef"', label: 'TEST_DATA', confidence: 55 },
-  { text: 'const token = "ghp_test_token_1234567890abcdef"', label: 'TEST_DATA', confidence: 52 },
-  { text: 'db_password = "mysql_prod_root_pass_9981"', label: 'LEAK_CONFIRMED', confidence: 96 },
-  { text: 'const JWT_SECRET = "your_secret_key_here"', label: 'FALSE_POSITIVE', confidence: 25 },
-  { text: 'const API_KEY = "sk-1234567890abcdef-EXAMPLEKEY"', label: 'TEST_DATA', confidence: 60 },
-  { text: 'const AWS_KEY = "AKIAIOSFODNN7EXAMPLE"', label: 'TEST_DATA', confidence: 65 },
-  { text: 'const SLACK_WEBHOOK = "SLACK_WEBHOOK_URL"', label: 'LEAK_CONFIRMED', confidence: 95 },
-  { text: 'const PASSWORD = "demo_password"', label: 'TEST_DATA', confidence: 45 },
-  { text: 'const API_KEY = "1234567890abcdef"  # example', label: 'TEST_DATA', confidence: 40 },
-  { text: 'db_conn = mysql.connect(host="prod-db", user="admin", password="RealPass123!")', label: 'LEAK_CONFIRMED', confidence: 97 },
-  { text: '// const API_KEY = "fake_key_for_demo"', label: 'FALSE_POSITIVE', confidence: 15 }
-];
 
 function calculateEntropy(str) {
   const freq = {};
@@ -68,7 +47,21 @@ function buildVocabulary(data) {
   return Array.from(vocab).sort();
 }
 
-function textToVector(text, vocab) {
+function computeIDF(data, vocab) {
+  const df = new Array(vocab.length).fill(0);
+  const N = data.length;
+  const tokenMap = {};
+  vocab.forEach((t, i) => tokenMap[t] = i);
+  for (const item of data) {
+    const seen = new Set(tokenize(item.text));
+    for (const token of seen) {
+      if (tokenMap[token] !== undefined) df[tokenMap[token]]++;
+    }
+  }
+  return df.map(count => Math.log((N + 1) / (count + 1)) + 1);
+}
+
+function textToVector(text, vocab, idf) {
   const tokens = tokenize(text);
   const vector = new Array(vocab.length).fill(0);
   const tokenMap = {};
@@ -77,6 +70,9 @@ function textToVector(text, vocab) {
     if (tokenMap[token] !== undefined) {
       vector[tokenMap[token]]++;
     }
+  }
+  for (let i = 0; i < vector.length; i++) {
+    if (vector[i] > 0) vector[i] *= idf[i];
   }
   return vector;
 }
@@ -96,12 +92,13 @@ function cosineSimilarity(v1, v2) {
 
 function trainClassifier(data) {
   const vocab = buildVocabulary(data);
+  const idf = computeIDF(data, vocab);
   const labelVectors = {};
   for (const item of data) {
     if (!labelVectors[item.label]) {
       labelVectors[item.label] = [];
     }
-    const vector = textToVector(item.text, vocab);
+    const vector = textToVector(item.text, vocab, idf);
     labelVectors[item.label].push({ vector, confidence: item.confidence });
   }
   const labelCentroids = {};
@@ -118,13 +115,13 @@ function trainClassifier(data) {
     }
     labelCentroids[label] = centroid;
   }
-  return { vocab, labelCentroids, vocabMap: Object.fromEntries(vocab.map((t, i) => [t, i])) };
+  return { vocab, idf, labelCentroids, vocabMap: Object.fromEntries(vocab.map((t, i) => [t, i])) };
 }
 
 const CLASSIFIER_MODEL = trainClassifier(ML_TRAINING_DATA);
 
 function predictWithML(text) {
-  const vector = textToVector(text, CLASSIFIER_MODEL.vocab);
+  const vector = textToVector(text, CLASSIFIER_MODEL.vocab, CLASSIFIER_MODEL.idf);
   let bestLabel = 'SUSPICIOUS';
   let bestScore = 0.5;
   let confidence = 50;
@@ -145,21 +142,39 @@ function predictWithML(text) {
   return {
     decision: verdictMap[bestLabel] || 'Suspicious',
     confidence: Math.min(99, Math.max(5, confidence)),
-    reason: `ML classifier (TF-IDF) predicted ${bestLabel} with ${confidence}% confidence.`
+    reason: `Vector-space ML classifier (term-frequency + cosine similarity) predicted ${bestLabel} with ${confidence}% confidence.`
   };
+}
+
+function isPlaceholderValue(matchedValue) {
+  if (!matchedValue) return false;
+  const placeholderPatterns = [
+    /^x{4,}$/i, /^[*]{4,}$/, /^[-]{4,}$/, /your[-_]?(key|token|secret|password|api)/i,
+    /change[_ ]?me/i, /example/i, /test[-_]?key/i, /sk_test/, /pk_test/,
+    /\bx{4,}(?:[-\s_.\/]x{4,})+\b/i,
+    /AKIAIOSFODNN7EXAMPLE/, /wJalrXUtnFEMI\/K7MDENG\/bPxRfiCYEXAMPLEKEY/,
+    /^test/i,
+    /^(secret|pass|password|passw0rd|sa|my_password|123456|qwerty|admin)$/i
+  ];
+  for (const p of placeholderPatterns) {
+    if (p.test(matchedValue)) return true;
+  }
+  return false;
 }
 
 function analyzeVariableNaming(line, lines, idx) {
   const namePatterns = {
     real: [
-      { pattern: /\b(password|passwd|secret|api[_-]?key|token|access[_-]?key|secret[_-]?key|auth[_-]?token|db[_-]?(pass|password|url)|connection[_-]?string)\s*[:=]/i, weight: 0.9 },
+      { pattern: /\b(password|passwd|secret|api[_-]?key|token|access[_-]?key|secret[_-]?key|auth[_-]?token|db[_-]?(pass|password|url)|connection[_-]?string)["']?\s*[:=]/i, weight: 0.9 },
+      { pattern: /\b(access[_-]?key[_-]?(?:id)?|secret[_-]?key|secretkey)["']?\s*[:=]/i, weight: 0.9 },
       { pattern: /\b(AWS_|AZURE_|GCP_|GOOGLE_|STRIPE_|TWILIO_|SENDGRID_|DIGITALOCEAN_)/, weight: 0.85 },
       { pattern: /\b(prod|production|live|real|actual)\s*[_.]/i, weight: 0.7 },
       { pattern: /\b(DB_|DATABASE_|REDIS_|MONGODB_|POSTGRES_)/, weight: 0.8 },
-      { pattern: /\b(JWT[_-]?SECRET|SESSION[_-]?SECRET|ENCRYPTION[_-]?KEY)/i, weight: 0.85 }
+      { pattern: /\b(JWT[_-]?SECRET|SESSION[_-]?SECRET|ENCRYPTION[_-]?KEY)["']?\s*[:=]/i, weight: 0.85 },
+      { pattern: /\b[A-Za-z0-9_]*_(?:KEY|SECRET|TOKEN|PASSWORD|PASS)\b["']?\s*[:=]/i, weight: 0.9 }
     ],
     mock: [
-      { pattern: /\b(example|sample|dummy|mock|test|fake|placeholder|demo)[_.-]/i, weight: 0.8 },
+      { pattern: /\b(example|sample|dummy|mock|test|fake|placeholder|demo)[\s_.-]/i, weight: 0.8 },
       { pattern: /\b(YOUR[_-]?|CHANGE[_-]?ME|FIX[_-]?ME|TODO)/i, weight: 0.9 },
       { pattern: /\b(MY[_-]?|TEST[_-]?|LOCAL[_-]?|DEV[_-]?)/i, weight: 0.5 }
     ]
@@ -177,14 +192,17 @@ function analyzeVariableNaming(line, lines, idx) {
         score = weight;
         maxWeight = weight;
       }
-      evidence.push(`Variable naming pattern suggests real credential usage`);
-      break;
     }
+  }
+  if (maxWeight > 0) {
+    evidence.push('Variable naming pattern suggests real credential usage');
   }
 
   for (const { pattern, weight } of namePatterns.mock) {
     if (pattern.test(checkLine)) {
-      if (weight * 0.3 > maxWeight) {
+      if (weight >= 0.8 && maxWeight > 0) {
+        score = Math.min(score, 1 - weight * 0.7);
+      } else if (weight * 0.3 > maxWeight) {
         score = 1 - weight * 0.7;
       }
       evidence.push(`Variable naming contains mock/test indicator`);
@@ -192,44 +210,76 @@ function analyzeVariableNaming(line, lines, idx) {
     }
   }
 
+  const trimmedLine = line.trim();
+  const isCommentLine = trimmedLine.startsWith('//') || trimmedLine.startsWith('#') || trimmedLine.startsWith('/*') || trimmedLine.startsWith('*');
+  if (isCommentLine && maxWeight > 0) {
+    const valMatch = trimmedLine.match(/=\s*['"]([^'"]+)['"]/);
+    const hasPlaceholderValue = valMatch && isPlaceholderValue(valMatch[1]);
+    const hasMockKeyword = /\b(example|sample|dummy|mock|test|fake|placeholder|demo|changeme|your_|TODO)\b/i.test(trimmedLine);
+    if (hasPlaceholderValue || hasMockKeyword) {
+      score = Math.min(score, 0.3);
+      evidence.push('Matched line is a commented-out placeholder/example; not an active credential');
+    }
+  }
+
   return { score: Math.round(score * 100) / 100, evidence: evidence.length > 0 ? evidence.join(', ') : 'No naming pattern detected' };
 }
 
-function analyzeValueEntropy(matchedValue) {
+function analyzeValueEntropy(matchedValue, secretType) {
   if (!matchedValue || matchedValue.length < 4) {
     return { score: 0.3, evidence: 'Value too short for entropy analysis' };
   }
 
-  const entropy = calculateEntropy(matchedValue);
-  const lengthScore = Math.min(matchedValue.length / 64, 1);
-  const hasNumbers = /\d/.test(matchedValue);
-  const hasUpper = /[A-Z]/.test(matchedValue);
-  const hasSpecial = /[^a-zA-Z0-9]/.test(matchedValue);
+  // If the matched string bundles a key (e.g. `password="test"` or `accessKeyId: 'AKIA..'`),
+  // analyze the value itself rather than the key+value string.
+  const valueMatch = matchedValue.match(/(?:[:=]\s*)['"]?([^'"]+)['"]\s*$/);
+  const value = valueMatch ? valueMatch[1] : matchedValue;
+
+  const entropy = calculateEntropy(value);
+  const lengthScore = Math.min(value.length / 64, 1);
+  const hasNumbers = /\d/.test(value);
+  const hasUpper = /[A-Z]/.test(value);
+  const hasSpecial = /[^a-zA-Z0-9]/.test(value);
   const complexity = (hasNumbers + hasUpper + hasSpecial) / 3;
 
-  const placeholderPatterns = [
-    /^x{4,}$/i, /^[*]{4,}$/, /^[-]{4,}$/, /your[-_]?(key|token|secret|password|api)/i,
-    /change[_ ]?me/i, /example/i, /test[-_]?key/i, /sk_test/, /pk_test/,
-    /AKIAIOSFODNN7EXAMPLE/, /wJalrXUtnFEMI\/K7MDENG\/bPxRfiCYEXAMPLEKEY/
-  ];
-
-  let isPlaceholder = false;
-  for (const p of placeholderPatterns) {
-    if (p.test(matchedValue)) {
-      isPlaceholder = true;
-      break;
-    }
-  }
+  const isPlaceholder = isPlaceholderValue(value);
 
   let score;
   if (isPlaceholder) {
     score = 0.15;
-  } else if (entropy > 4 && lengthScore > 0.3 && complexity > 0.5) {
-    score = 0.85 + (entropy / 8) * 0.15;
+  } else if (entropy > 4 && lengthScore > 0.3) {
+    score = 0.8 + (entropy / 8) * 0.15;
   } else if (entropy > 3 && lengthScore > 0.2) {
     score = 0.6;
   } else {
     score = 0.3;
+  }
+
+  const formatScores = {
+    'AWS Client Access Key': 0.9,
+    'Google API Key': 0.9,
+    'OpenAI API Key': 0.9,
+    'GitHub OAuth Token': 0.9,
+    'Slack Webhook URL': 0.9,
+    'SSH/RSA Private Key': 0.9,
+    'Stripe API Key': 0.9,
+    'Telegram Bot Token': 0.9,
+    'Discord Webhook URL': 0.9,
+    'Slack API Token': 0.9,
+    'Twilio API Key': 0.9,
+    'Azure Storage Account Key': 0.9,
+    'Google OAuth Client Secret': 0.9,
+    'MongoDB Connection String': 0.9,
+    'PostgreSQL/MySQL Connection URL': 0.9,
+    'GitLab Personal Access Token': 0.9,
+    'npm Access Token': 0.9,
+    'HashiCorp Vault Token': 0.9
+  };
+  if (!isPlaceholder && formatScores[secretType] !== undefined) {
+    const formatScore = formatScores[secretType];
+    if (formatScore > score) {
+      score = formatScore;
+    }
   }
 
   score = Math.min(score, 1);
@@ -238,8 +288,9 @@ function analyzeValueEntropy(matchedValue) {
   if (isPlaceholder) evidenceParts.push('Value matches known placeholder pattern');
   if (entropy > 4) evidenceParts.push(`High entropy (${entropy.toFixed(1)}) suggests real credential`);
   else if (entropy < 2.5) evidenceParts.push(`Low entropy (${entropy.toFixed(1)}) suggests placeholder`);
-  if (matchedValue.length > 20) evidenceParts.push(`Value length (${matchedValue.length} chars) consistent with credentials`);
+  if (value.length > 20) evidenceParts.push(`Value length (${value.length} chars) consistent with credentials`);
   if (complexity > 0.6) evidenceParts.push('Mixed character types increase credential likelihood');
+  if (formatScores[secretType] !== undefined && !isPlaceholder) evidenceParts.push(`Value matches canonical ${secretType} format`);
 
   return {
     score: Math.round(score * 100) / 100,
@@ -398,16 +449,49 @@ function analyzeSurroundingCode(lines, idx) {
   return { score: Math.round(score * 100) / 100, evidence: evidence.length > 0 ? evidence.join(', ') : 'Standard code context' };
 }
 
+// Dataset reference-match: does this value match a real leaked secret the dataset recorded?
+function analyzeDatasetReference(matchedValue) {
+  if (!matchedValue) return null;
+  const valueMatch = matchedValue.match(/(?:[:=]\s*)['"]?([^'"]+)['"]\s*$/);
+  const value = (valueMatch ? valueMatch[1] : matchedValue).trim();
+  if (!value || value.length < 4) return null;
+
+  if (REF_EXACT.has(value)) {
+    return { score: 0.92, evidence: 'Value exactly matches a real leaked secret recorded in the CredData reference dataset' };
+  }
+  if (value.length >= 24) {
+    const fingerprint = `${value.slice(0, 12)}|${value.slice(-12)}`;
+    if (REF_HEADTAIL.has(fingerprint)) {
+      return { score: 0.75, evidence: 'Value shares start/end fingerprint with a real leaked secret in the CredData reference dataset' };
+    }
+  }
+  return null;
+}
+
 function analyzeAssignmentPattern(line, lines, idx) {
   const trimmed = line.trim();
+
+  const isCommentLine = trimmed.startsWith('//') || trimmed.startsWith('#') || trimmed.startsWith('/*') || trimmed.startsWith('*');
+  if (isCommentLine) {
+    return { score: 0.5, evidence: 'Line is commented out (inactive code)' };
+  }
 
   const envVarAssignment = /\bprocess\.env\.\w+|process\.env\[\s*['"]\w+['"]\s*\]/i.test(trimmed);
   if (envVarAssignment) {
     return { score: 0.1, evidence: 'Value is loaded from environment variable (secure pattern)' };
   }
 
+  const objectLiteralAssignment = /^\s*["']?\w+["']?\s*:\s*['"][^'"]+['"]\s*,?\s*$/.test(trimmed);
+  if (objectLiteralAssignment) {
+    return { score: 0.8, evidence: 'Value is hardcoded as an object/JSON property (insecure pattern)' };
+  }
+
   const hardcodedAssignment = /=\s*['"][^'"]+['"]\s*;?\s*$/.test(trimmed) && !trimmed.includes('process.env');
   if (hardcodedAssignment) {
+    const value = trimmed.match(/=\s*['"]([^'"]+)['"]\s*;?\s*$/);
+    if (value && isPlaceholderValue(value[1])) {
+      return { score: 0.3, evidence: 'Value is a placeholder/test literal rather than a real secret' };
+    }
     return { score: 0.8, evidence: 'Value is hardcoded directly in source (insecure pattern)' };
   }
 
@@ -441,12 +525,12 @@ export function analyzeContext({ filePath, matchedValue, lineContent, allLines, 
 
   let decision, confidence, reason, signalDetails, engine;
 
-  if (mlConfidence > 65 || heuristicConfidence > 70) {
+  if (mlConfidence >= 60 && mlConfidence > heuristicConfidence) {
     decision = mlResult.decision;
-    confidence = Math.round((mlConfidence * 0.7 + heuristicConfidence * 0.3));
+    confidence = mlConfidence;
     reason = mlResult.reason + ' ' + heuristicResult.reason;
     signalDetails = [
-      { name: 'TF-IDF ML Classifier', score: mlConfidence / 100, evidence: `TF-IDF vector similarity with trained patterns` },
+      { name: 'Vector-Space ML Classifier', score: mlConfidence / 100, evidence: `Cosine similarity against centroids trained on the CredData credential dataset` },
       ...heuristicResult.signalDetails
     ];
     engine = 'tf-idf-ml';
@@ -472,7 +556,8 @@ function analyzeWithHeuristicRules({ filePath, matchedValue, lineContent, allLin
 
   const signals = [
     { name: 'Variable Naming', result: analyzeVariableNaming(lineContent, lines, lineIndex), weight: 1.0 },
-    { name: 'Value Entropy', result: analyzeValueEntropy(matchedValue), weight: 1.0 },
+    { name: 'Value Entropy', result: analyzeValueEntropy(matchedValue, secretType), weight: 1.0 },
+    { name: 'Dataset Reference Match', result: analyzeDatasetReference(matchedValue), weight: 1.0 },
     { name: 'Comment Context', result: analyzeCommentContext(lines, lineIndex), weight: 0.8 },
     { name: 'File Context', result: analyzeFileContext(filePath), weight: 0.7 },
     { name: 'Code Structure', result: analyzeSurroundingCode(lines, lineIndex), weight: 0.6 },
@@ -481,16 +566,20 @@ function analyzeWithHeuristicRules({ filePath, matchedValue, lineContent, allLin
 
   let totalScore = 0;
   let totalWeight = 0;
+  let signalCount = 0;
   const signalDetails = [];
 
   for (const signal of signals) {
-    totalScore += signal.result.score * signal.weight;
-    totalWeight += signal.weight;
+    if (signal.result === null) continue;
     signalDetails.push({
       name: signal.name,
       score: signal.result.score,
       evidence: signal.result.evidence
     });
+    if (signal.result.score === 0.5) continue;
+    totalScore += signal.result.score * signal.weight;
+    totalWeight += signal.weight;
+    signalCount++;
   }
 
   const finalScore = totalWeight > 0 ? Math.round((totalScore / totalWeight) * 100) : 50;

@@ -19,6 +19,8 @@
 		"vite": "^8.0.16"
 	},
 	"dependencies": {
+		"@neondatabase/serverless": "^1.1.0",
+		"@supabase/supabase-js": "^2.115.0",
 		"chart.js": "^4.5.1",
 		"html2canvas": "^1.4.1",
 		"jspdf": "^4.2.1",
