@@ -221,7 +221,7 @@ console.log([...chosenFiles].join('\n'));
 
 // Build the ZIP
 const zip = new JSZip();
-const README = `SecurAI Demo Test Codebase
+const README = `SecureGaurd Demo Test Codebase
 =============================
 This ZIP is a curated sample extracted from the CredData credential-leakage dataset
 (Samsung CredData - https://github.com/Samsung/CredData).
@@ -232,7 +232,7 @@ It contains real-world source files labeled by the dataset authors:
   - False (F): false-positive style cases (defaults, weak passwords, no real secret)
 
 Files are organized under src/, config/, tests/, scripts/ and examples/ directories.
-Provided for local testing and demonstration of SecurAI's detection engine only.
+Provided for local testing and demonstration of SecureGaurd's detection engine only.
 `;
 
 zip.file('README.txt', README);

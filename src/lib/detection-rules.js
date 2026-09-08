@@ -1,4 +1,4 @@
-// SecurAI secret detection rules — the single source of truth for the regexes
+// SecureGaurd secret detection rules — the single source of truth for the regexes
 // used by the scanner, the persist layer, the UI masking and the PDF generator.
 //
 // Each rule exposes:

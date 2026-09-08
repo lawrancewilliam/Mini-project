@@ -1,4 +1,4 @@
-// SecurAI value-level masking (single source of truth).
+// SecureGaurd value-level masking (single source of truth).
 //
 // Principles:
 //  - maskSensitiveValue() masks ONLY a detected sensitive value, never a code line.

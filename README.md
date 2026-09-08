@@ -15,7 +15,7 @@ To recreate this project with the same configuration:
 
 ```sh
 # recreate this project
-npx sv@0.16.3 create --template minimal --no-types --add tailwindcss="plugins:none" --install npm Mini-project
+npx sv@0.16.3 create --template minimal --no-types --add tailwindcss="plugins:none" --install npm SecureGaurd
 ```
 
 ## Developing

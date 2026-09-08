@@ -19,7 +19,7 @@
 </script>
 
 <svelte:head>
-	<title>SecurAI | AI-Assisted Sensitive Data Leakage Detection</title>
+	<title>SecureGaurd | AI-Assisted Sensitive Data Leakage Detection</title>
 	<meta name="description" content="Identify hardcoded API keys, tokens, database credentials, and secret leaks with real-time AI security analysis." />
 	<link rel="icon" href={favicon} />
 </svelte:head>

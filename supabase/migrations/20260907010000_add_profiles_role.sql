@@ -1,5 +1,5 @@
 -- ============================================================
--- SecurAI – Add database-backed profile roles
+-- SecureGaurd – Add database-backed profile roles
 -- Single source of truth for authorization: public.profiles.role
 -- ============================================================
 

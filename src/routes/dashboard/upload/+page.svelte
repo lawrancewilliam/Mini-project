@@ -95,11 +95,13 @@
     <form onsubmit={handleStartScan} class="space-y-6">
       <!-- File upload -->
       <div>
-        <label class="block text-sm font-bold text-dark-charcoal/70 mb-2">Codebase ZIP Archive</label>
+        <label for="file-input" class="block text-sm font-bold text-dark-charcoal/70 mb-2">Codebase ZIP Archive</label>
         
         {#if !zipFile}
           <!-- Drag Box -->
           <div
+            role="group"
+            aria-label="ZIP archive upload area"
             ondragover={handleDragOver}
             ondragleave={handleDragLeave}
             ondrop={handleDrop}
@@ -143,6 +145,7 @@
             
             <button
               type="button"
+              aria-label="Remove selected ZIP archive"
               onclick={removeFile}
               class="text-red-500 hover:bg-red-50 p-2.5 rounded-xl transition-colors cursor-pointer"
             >
@@ -182,7 +185,7 @@
 
       <!-- Scan Configuration -->
       <div class="border-t border-dark-charcoal/10 pt-6">
-        <label class="block text-sm font-bold text-dark-charcoal/70 mb-4">Scanning Pipelines</label>
+        <div class="block text-sm font-bold text-dark-charcoal/70 mb-4">Scanning Pipelines</div>
         
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <!-- Regex Scanner -->

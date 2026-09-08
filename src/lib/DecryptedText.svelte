@@ -1,5 +1,5 @@
 <script>
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
 
   let {
     text = '',
@@ -16,11 +16,11 @@
     clickMode = 'once'
   } = $props();
 
-  let displayText = $state(text);
+  let displayText = $state(untrack(() => text));
   let isAnimating = $state(false);
   let revealedIndices = $state(new Set());
   let hasAnimated = $state(false);
-  let isDecrypted = $state(animateOn !== 'click');
+  let isDecrypted = $state(untrack(() => animateOn !== 'click'));
   let direction = $state('forward');
 
   let intervalId = $state(null);

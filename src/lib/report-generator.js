@@ -6,7 +6,7 @@ import { maskSensitiveValue, redactType, spanForMatch } from '$lib/masking.js';
 // (default export = namespace object). Normalize so this module works in both.
 const JsPDF = typeof jsPDF === 'function' ? jsPDF : jsPDF.default || jsPDF;
 
-// SecurAI professional PDF security report generator.
+// SecureGaurd professional PDF security report generator.
 // Rendered with jsPDF vector primitives (no html2canvas): full control over
 // A4 layout, dynamic pagination, repeating headers/footers and page numbers.
 
@@ -345,7 +345,7 @@ function coverSection(R, data) {
   // Top row: logo + wordmark (left), report title/meta (right)
   drawLogo(R, MARGIN, y, 12);
   setFont(R, { size: 21, style: 'bold', color: P.text });
-  R.pdf.text('SecurAI', MARGIN + 17, y + 0.4, { baseline: 'top' });
+  R.pdf.text('SecureGaurd', MARGIN + 17, y + 0.4, { baseline: 'top' });
   setFont(R, { size: 7.5, style: 'bold', color: P.muted });
   R.pdf.text('AI-ASSISTED SENSITIVE DATA LEAKAGE DETECTION', MARGIN + 17, y + 8.2, { baseline: 'top' });
 
@@ -370,7 +370,7 @@ function coverSection(R, data) {
   // Executive summary (dynamic)
   sectionHeader(R, 1, 'Executive Summary', 'Overview of the assessment for this project');
   const ex = [
-    `SecurAI performed an automated sensitive-data leakage assessment against the project "${data.scanName}".`,
+    `SecureGaurd performed an automated sensitive-data leakage assessment against the project "${data.scanName}".`,
     `A total of ${data.filesScanned} key source and configuration files were analyzed, and ${data.total} potential exposure${data.total === 1 ? '' : 's'} were identified (${data.sevCounts.Critical} Critical, ${data.sevCounts.High} High, ${data.sevCounts.Medium} Medium, ${data.sevCounts.Low} Low).`,
     `AI verdict breakdown - ${data.confirmed} Leak Confirmed, ${data.suspicious} Suspicious, ${data.testData} Test Data and ${data.falsePositive} False Positive.`,
     `The overall risk score is ${data.score} / 100 (${data.level}), placing this project at a status of ${data.status.label}.`
@@ -876,7 +876,7 @@ function remediationSection(R, data) {
     ...(data.byVerdict['Test Data'] > 0 ? ['Replace production-like test credentials with sanitized fixtures.'] : []),
     ...(data.byVerdict['False Positive'] > 0 ? ['Tune detection rules to reduce false positives on non-credential matches.'] : []),
     'Purge previously committed secrets from version-control history.',
-    'Re-run a SecurAI scan after remediation to confirm the exposure is resolved.'
+    'Re-run a SecureGaurd scan after remediation to confirm the exposure is resolved.'
   ];
   checklist.forEach(item => {
     ensure(R, 9);
@@ -918,7 +918,7 @@ function conclusionSection(R, data) {
   setFont(R, { size: 8.5, style: 'bold', color: P.text });
   R.pdf.text('Disclaimer', MARGIN, R.y, { baseline: 'top' });
   R.y += 4.6;
-  R.y += drawWrapped(R, `This report is generated automatically by SecurAI from the results stored for scan ${data.id}. It reflects the state of the analyzed files at the time of the scan and does not constitute a full penetration test. Reported values are masked and must never be reconstructed from this document.`, MARGIN, R.y, CONTENT_W, 8.5, { color: P.faint });
+  R.y += drawWrapped(R, `This report is generated automatically by SecureGaurd from the results stored for scan ${data.id}. It reflects the state of the analyzed files at the time of the scan and does not constitute a full penetration test. Reported values are masked and must never be reconstructed from this document.`, MARGIN, R.y, CONTENT_W, 8.5, { color: P.faint });
 }
 
 // ---------------------------------------------------------------------------
@@ -930,7 +930,7 @@ function stampHeaderFooter(pdf, data, page, total) {
 
   // Header
   setFont({ pdf }, { size: 7.5, style: 'bold', color: P.text });
-  pdf.text('SecurAI', MARGIN, 6.4, { baseline: 'top' });
+  pdf.text('SecureGaurd', MARGIN, 6.4, { baseline: 'top' });
   setFont({ pdf }, { size: 7.5, color: P.faint });
   pdf.text('  |  AI-Assisted Sensitive Data Leakage Detection', MARGIN + 12.5, 6.4, { baseline: 'top' });
   setFont({ pdf }, { size: 7.5, color: P.faint });
@@ -947,7 +947,7 @@ function stampHeaderFooter(pdf, data, page, total) {
   pdf.setLineWidth(0.2);
   pdf.line(MARGIN, 280.2, PAGE_W - MARGIN, 280.2);
   setFont({ pdf }, { size: 7, color: P.faint });
-  const footerLeft = `SecurAI Security Assessment - ${data.scanName}`.slice(0, 46);
+  const footerLeft = `SecureGaurd Security Assessment - ${data.scanName}`.slice(0, 46);
   const footerMid = `Report ID: ${data.id}`;
   const footerRight = `Page ${page} of ${total}`;
   pdf.text(footerLeft, MARGIN, 284, { baseline: 'top' });
@@ -990,5 +990,5 @@ export function reportFileName(item) {
     .trim()
     .replace(/\s+/g, '_')
     .slice(0, 60) || 'Project';
-  return `SecurAI_Report_${name}.pdf`;
+  return `SecureGaurd_Report_${name}.pdf`;
 }

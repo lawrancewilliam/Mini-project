@@ -1,5 +1,5 @@
 -- ============================================================
--- SecurAI – Initial Database Schema
+-- SecureGaurd – Initial Database Schema
 -- Supabase PostgreSQL Migration
 -- ============================================================
 

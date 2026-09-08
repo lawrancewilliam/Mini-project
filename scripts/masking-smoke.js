@@ -1,4 +1,4 @@
-// SecurAI masking + detection-boundary smoke tests.
+// SecureGaurd masking + detection-boundary smoke tests.
 // Run:      node scripts/masking-smoke.js
 // Verifies type-specific value masking (never whole-line masking) and that the
 // detection regexes match exactly the sensitive value (no HTML/CSS/JS capture).

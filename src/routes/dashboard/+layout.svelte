@@ -137,7 +137,7 @@
       <svg class="w-6 h-6 text-accent-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
       </svg>
-      <span>Secur<span class="text-accent-purple">AI</span></span>
+      <span>Secure<span class="text-accent-purple">Gaurd</span></span>
     </div>
     
     <button onclick={() => isMobileMenuOpen = !isMobileMenuOpen} class="text-dark-charcoal p-1 focus:outline-none">
@@ -157,7 +157,7 @@
         <svg class="w-8 h-8 text-accent-purple animate-pulse-glow rounded-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
         </svg>
-        <span>Secur<span class="text-accent-purple">AI</span></span>
+        <span>Secure<span class="text-accent-purple">Gaurd</span></span>
       </a>
 
       <!-- Navigation links -->
@@ -233,7 +233,7 @@
         </h2>
       </div>
 
-      <!-- Active Scan Project Selector -->
+<!-- Active Scan Project Selector -->
       <div class="flex items-center gap-3 bg-bg-warm px-4 py-2 border border-accent-purple/30 focus-within:border-accent-purple focus-within:ring-2 focus-within:ring-accent-purple/20 rounded-2xl max-w-xs w-full sm:w-auto transition-all purple-glow">
         <span class="text-xs font-bold text-accent-purple uppercase tracking-wider whitespace-nowrap">Target:</span>
         {#if appState.scans.length > 0}
