@@ -2,6 +2,7 @@
   import { appState, maskPII } from '$lib/state.svelte';
   import { goto } from '$app/navigation';
   import { browser } from '$app/environment';
+  import CustomSelect from '$lib/CustomSelect.svelte';
 
   const project = $derived(appState.selectedScan);
 
@@ -40,9 +41,12 @@
       result = result.filter(f => f.severity === selectedSeverity);
     }
 
-    // Filter by status
+    // Filter by status/verdict
     if (selectedStatus !== 'All') {
-      result = result.filter(f => f.status === selectedStatus);
+      result = result.filter(f =>
+        (f.decision && f.decision.toLowerCase() === selectedStatus.toLowerCase()) ||
+        (f.status && f.status.toLowerCase() === selectedStatus.toLowerCase())
+      );
     }
 
     // Sort findings
@@ -84,13 +88,30 @@
     }
   }
 
-  function getStatusClass(status) {
-    switch (status) {
-      case 'Active': return 'bg-red-50 text-red-600 border-red-100';
-      case 'Revoked': return 'bg-green-50 text-green-600 border-green-100';
-      case 'False Positive': return 'bg-gray-100 text-gray-500 border-gray-200';
-      default: return 'bg-bg-warm text-dark-charcoal';
+  function getVerdictBadgeClass(verdict = '') {
+    const v = String(verdict).toLowerCase();
+    if (v.includes('leak') || v.includes('active') || v.includes('confirmed')) {
+      return 'bg-red-50 text-red-600 border border-red-200/80';
     }
+    if (v.includes('suspicious')) {
+      return 'bg-orange-50 text-orange-600 border border-orange-200/80';
+    }
+    if (v.includes('test')) {
+      return 'bg-slate-100 text-slate-600 border border-slate-200/80';
+    }
+    if (v.includes('false') || v.includes('revoked')) {
+      return 'bg-purple-50 text-purple-600 border border-purple-200/80';
+    }
+    return 'bg-blue-50 text-blue-600 border border-blue-200/80';
+  }
+
+  function getVerdictDotClass(verdict = '') {
+    const v = String(verdict).toLowerCase();
+    if (v.includes('leak') || v.includes('active') || v.includes('confirmed')) return 'bg-red-500';
+    if (v.includes('suspicious')) return 'bg-orange-500';
+    if (v.includes('test')) return 'bg-slate-500';
+    if (v.includes('false') || v.includes('revoked')) return 'bg-purple-500';
+    return 'bg-blue-500';
   }
 
   function handleRowClick(findingId) {
@@ -109,41 +130,41 @@
       <!-- Files Scanned -->
       <div class="bg-card-warm border border-dark-charcoal/10 rounded-2xl p-4 text-center shadow-sm">
         <div class="text-[10px] font-bold text-dark-charcoal/50 uppercase tracking-wider">Files Scanned</div>
-        <div class="text-2xl font-extrabold text-dark-charcoal mt-1">{project.filesScanned}</div>
+        <div class="text-2xl font-extrabold font-display text-dark-charcoal mt-1">{project.filesScanned}</div>
       </div>
 
-      <!-- Total Leaks -->
+      <!-- Total Findings -->
       <div class="bg-card-warm border border-dark-charcoal/10 rounded-2xl p-4 text-center shadow-sm">
-        <div class="text-[10px] font-bold text-dark-charcoal/50 uppercase tracking-wider">Total Leaks</div>
-        <div class="text-2xl font-extrabold text-dark-charcoal mt-1">{project.secretsFound}</div>
+        <div class="text-[10px] font-bold text-dark-charcoal/50 uppercase tracking-wider">Total Findings</div>
+        <div class="text-2xl font-extrabold font-display text-dark-charcoal mt-1">{project.secretsFound}</div>
       </div>
 
       <!-- Critical -->
-      <div class="bg-card-warm border border-dark-charcoal/10 rounded-2xl p-4 text-center shadow-sm border-l-4 border-l-red-500">
+      <div class="bg-card-warm border border-dark-charcoal/10 rounded-2xl p-4 text-center shadow-sm">
         <div class="text-[10px] font-bold text-red-600/70 uppercase tracking-wider">Critical</div>
-        <div class="text-2xl font-extrabold text-red-600 mt-1">{project.criticalCount}</div>
+        <div class="text-2xl font-extrabold font-display text-red-600 mt-1">{project.criticalCount}</div>
       </div>
 
       <!-- High -->
-      <div class="bg-card-warm border border-dark-charcoal/10 rounded-2xl p-4 text-center shadow-sm border-l-4 border-l-orange-500">
+      <div class="bg-card-warm border border-dark-charcoal/10 rounded-2xl p-4 text-center shadow-sm">
         <div class="text-[10px] font-bold text-orange-600/70 uppercase tracking-wider">High</div>
-        <div class="text-2xl font-extrabold text-orange-600 mt-1">{project.highCount}</div>
+        <div class="text-2xl font-extrabold font-display text-orange-600 mt-1">{project.highCount}</div>
       </div>
 
       <!-- Medium -->
-      <div class="bg-card-warm border border-dark-charcoal/10 rounded-2xl p-4 text-center shadow-sm border-l-4 border-l-yellow-500">
+      <div class="bg-card-warm border border-dark-charcoal/10 rounded-2xl p-4 text-center shadow-sm">
         <div class="text-[10px] font-bold text-yellow-600/70 uppercase tracking-wider">Medium</div>
-        <div class="text-2xl font-extrabold text-yellow-600 mt-1">{project.mediumCount}</div>
+        <div class="text-2xl font-extrabold font-display text-yellow-600 mt-1">{project.mediumCount}</div>
       </div>
 
       <!-- Low -->
-      <div class="bg-card-warm border border-dark-charcoal/10 rounded-2xl p-4 text-center shadow-sm border-l-4 border-l-blue-500">
+      <div class="bg-card-warm border border-dark-charcoal/10 rounded-2xl p-4 text-center shadow-sm">
         <div class="text-[10px] font-bold text-blue-600/70 uppercase tracking-wider">Low</div>
-        <div class="text-2xl font-extrabold text-blue-600 mt-1">{project.lowCount}</div>
+        <div class="text-2xl font-extrabold font-display text-blue-600 mt-1">{project.lowCount}</div>
       </div>
     </div>
 
-    <!-- Interactive Detections Board -->
+    <!-- Main Results Container -->
     <div class="bg-card-warm border border-dark-charcoal/10 rounded-3xl p-6 shadow-sm space-y-6">
       
       <!-- Filter Controls Header -->
@@ -175,16 +196,19 @@
             {/each}
           </div>
 
-          <!-- Status Filter -->
-          <select
-            bind:value={selectedStatus}
-            class="bg-bg-warm border border-accent-purple/30 px-4 py-2 rounded-2xl text-xs font-bold text-dark-charcoal focus:outline-none focus:border-accent-purple focus:ring-2 focus:ring-accent-purple/20 transition-all purple-glow cursor-pointer"
-          >
-            <option value="All">All Statuses</option>
-            <option value="Active">Active</option>
-            <option value="Revoked">Revoked</option>
-            <option value="False Positive">False Positive</option>
-          </select>
+          <!-- Verdict Filter -->
+          <CustomSelect
+            options={[
+              { value: 'All', label: 'All Verdicts' },
+              { value: 'Leak Confirmed', label: 'Leak Confirmed' },
+              { value: 'Suspicious', label: 'Suspicious' },
+              { value: 'Test Data', label: 'Test Data' },
+              { value: 'False Positive', label: 'False Positive' }
+            ]}
+            value={selectedStatus}
+            onChange={(val) => selectedStatus = val}
+            buttonClass="bg-bg-warm border border-dark-charcoal/15 px-3.5 py-2 rounded-xl text-xs font-semibold text-dark-charcoal hover:border-dark-charcoal/30 shadow-sm"
+          />
         </div>
       </div>
 
@@ -217,7 +241,7 @@
                   {#if sortField === 'severity'}{sortOrder === 'asc' ? '↑' : '↓'}{/if}
                 </div>
               </th>
-              <th class="py-3 px-4 w-32">Status</th>
+              <th class="py-3 px-4 w-36">AI Verdict</th>
               <th class="py-3 px-4 text-right w-24">Action</th>
             </tr>
           </thead>
@@ -236,16 +260,11 @@
                       {finding.severity}
                     </span>
                   </td>
-                  <td class="py-3.5 px-4" onclick={(e) => e.stopPropagation()}>
-                    <select
-                      value={finding.status}
-                      onchange={(e) => finding.status = e.target.value}
-                      class="bg-bg-warm border border-accent-purple/30 rounded-xl px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase focus:outline-none focus:border-accent-purple focus:ring-2 focus:ring-accent-purple/20 transition-all cursor-pointer {getStatusClass(finding.status)}"
-                    >
-                      <option value="Active">Active</option>
-                      <option value="Revoked">Revoked</option>
-                      <option value="False Positive">False Positive</option>
-                    </select>
+                  <td class="py-3.5 px-4">
+                    <span class="px-2.5 py-1 text-[10px] font-extrabold rounded-lg uppercase tracking-wider inline-flex items-center gap-1.5 {getVerdictBadgeClass(finding.decision || finding.status)}">
+                      <span class="w-1.5 h-1.5 rounded-full {getVerdictDotClass(finding.decision || finding.status)}"></span>
+                      {finding.decision || finding.status || 'Leak Confirmed'}
+                    </span>
                   </td>
                   <td class="py-3.5 px-4 text-right" onclick={(e) => e.stopPropagation()}>
                     <button

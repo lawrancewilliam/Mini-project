@@ -18,41 +18,41 @@ const CONTENT_TOP = 22;
 const CONTENT_BOTTOM = 275;
 
 const DEFAULT_COLORS = {
-  purple: [139, 92, 246],
-  purpleDeep: [124, 58, 237],
-  bg: [11, 11, 16],
-  card: [21, 21, 30],
-  cardAlt: [17, 17, 24],
-  border: [41, 41, 55],
-  borderSoft: [32, 32, 44],
-  text: [244, 244, 245],
-  muted: [156, 163, 175],
-  faint: [113, 113, 122],
+  purple: [79, 70, 229],      // Indigo-600
+  purpleDeep: [67, 56, 202],  // Indigo-700
+  bg: [255, 255, 255],        // Pure Formal White Page Background
+  card: [248, 250, 252],      // Slate-50 surface container
+  cardAlt: [241, 245, 249],   // Slate-100 alternate row/code container
+  border: [226, 232, 240],    // Slate-200 border
+  borderSoft: [241, 245, 249],// Slate-100 soft line
+  text: [15, 23, 42],        // Slate-900 (Dark Charcoal)
+  muted: [71, 85, 105],       // Slate-600
+  faint: [100, 116, 139],     // Slate-500
   white: [255, 255, 255],
-  black: [17, 17, 17]
+  black: [15, 23, 42]
 };
 
 const SEVERITY = {
-  Critical: { bg: [220, 38, 38], fg: [255, 255, 255] },
-  High: { bg: [217, 82, 15], fg: [255, 255, 255] },
-  Medium: { bg: [234, 179, 8], fg: [17, 17, 17] },
-  Low: { bg: [34, 197, 94], fg: [17, 17, 17] }
+  Critical: { bg: [254, 226, 226], fg: [185, 28, 28] }, // Red-100 bg, Red-700 fg
+  High:     { bg: [255, 237, 213], fg: [194, 65, 12] }, // Orange-100 bg, Orange-700 fg
+  Medium:   { bg: [254, 240, 138], fg: [161, 98, 7] },  // Yellow-200 bg, Yellow-800 fg
+  Low:      { bg: [220, 252, 231], fg: [21, 128, 61] }   // Green-100 bg, Green-700 fg
 };
 
 const SEVERITY_ORDER = { Critical: 0, High: 1, Medium: 2, Low: 3 };
 
 const VERDICT_LABELS = ['Leak Confirmed', 'Suspicious', 'Test Data', 'False Positive'];
 const VERDICT_COLORS = {
-  'Leak Confirmed': [248, 113, 113],
-  Suspicious: [251, 146, 60],
-  'Test Data': [148, 163, 184],
-  'False Positive': [167, 139, 250]
+  'Leak Confirmed': [185, 28, 28],
+  Suspicious: [194, 65, 12],
+  'Test Data': [71, 85, 105],
+  'False Positive': [109, 40, 217]
 };
 
 const METER_BANDS = [
   { label: 'LOW', min: 0, max: 20, color: [34, 197, 94] },
   { label: 'MEDIUM', min: 20, max: 50, color: [234, 179, 8] },
-  { label: 'HIGH', min: 50, max: 75, color: [251, 146, 60] },
+  { label: 'HIGH', min: 50, max: 75, color: [249, 115, 22] },
   { label: 'CRITICAL', min: 75, max: 100, color: [220, 38, 38] }
 ];
 
@@ -129,7 +129,7 @@ function drawRect(R, x, y, w, h, fill, stroke, lineWidth = 0.3) {
 }
 
 function drawPill(R, x, y, w, h, label, bg, fg, size = 6.5) {
-  drawRect(R, x, y, w, h, bg);
+  drawRect(R, x, y, w, h, bg, [Math.max(0, bg[0] - 20), Math.max(0, bg[1] - 20), Math.max(0, bg[2] - 20)], 0.2);
   setFont(R, { size, style: 'bold', color: fg });
   R.pdf.text(label, x + w / 2, y + h / 2, { align: 'center', baseline: 'middle' });
 }
@@ -165,7 +165,7 @@ function sectionHeader(R, num, title, sub) {
     R.pdf.text(sub, MARGIN + 13.5, R.y + 8.1, { baseline: 'top' });
   }
   R.pdf.setDrawColor(DEFAULT_COLORS.border[0], DEFAULT_COLORS.border[1], DEFAULT_COLORS.border[2]);
-  R.pdf.setLineWidth(0.25);
+  R.pdf.setLineWidth(0.3);
   R.pdf.line(MARGIN, R.y + 12.6, PAGE_W - MARGIN, R.y + 12.6);
   R.y += h;
 }
@@ -194,18 +194,18 @@ function securityStatus(data) {
     (f.severity === 'High' || f.severity === 'Medium') &&
     (f.decision === 'Leak Confirmed' || f.decision === 'Suspicious'));
   if (score >= 75 || critical > 0) {
-    return { label: 'FAIL', bg: [220, 38, 38], fg: [255, 255, 255],
+    return { label: 'FAIL', bg: [254, 226, 226], fg: [185, 28, 28],
       text: 'Immediate action required - critical exposure detected.' };
   }
   if (findings.length === 0) {
-    return { label: 'PASS', bg: [34, 197, 94], fg: [17, 17, 17],
+    return { label: 'PASS', bg: [220, 252, 231], fg: [21, 128, 61],
       text: 'No sensitive data exposure detected in the scanned codebase.' };
   }
   if (significant.length > 0 || score >= 40) {
-    return { label: 'REVIEW REQUIRED', bg: [251, 146, 60], fg: [17, 17, 17],
+    return { label: 'REVIEW REQUIRED', bg: [255, 237, 213], fg: [194, 65, 12],
       text: 'Findings were discovered and require review and remediation.' };
   }
-  return { label: 'PASS', bg: [34, 197, 94], fg: [17, 17, 17],
+  return { label: 'PASS', bg: [220, 252, 231], fg: [21, 128, 61],
     text: 'No significant exposure found. Routine hardening is still recommended.' };
 }
 
@@ -264,15 +264,10 @@ function deriveReportData(item) {
 // Masked value + context snippet consumption
 // ---------------------------------------------------------------------------
 
-// The PDF consumes finding.masked_value / finding.context_snippet as-is; they
-// were redacted by the scanner before persistence. These helpers only provide a
-// safe fallback for legacy/partial data and never re-mask a whole line again.
-
 function maskedForFinding(f) {
   if (f && f.maskedValue && typeof f.maskedValue === 'string' && f.maskedValue.trim()) {
     return f.maskedValue.trim();
   }
-  // Defensive fallback: derive the value from the context and mask just it.
   const secretType = (f && f.secretType) || '';
   const text = (f && f.codeContext) || '';
   const rule = secretType ? RULES.find(r => r.name === secretType) : null;
@@ -289,15 +284,11 @@ function maskedForFinding(f) {
   return `${secretType || 'Sensitive value'} [masked]`;
 }
 
-// Context lines are already redacted in the DB. Only scrub residual plaintext
-// occurrences (of the finding's own type, plus stray emails) without touching
-// the rest of the line.
 function safeContext(ctx, type) {
   if (!ctx) return '';
   let out = String(ctx);
   const rule = type ? RULES.find(r => r.name === type) : null;
   if (rule) out = redactType(out, rule);
-  // Stray email addresses are a common cross-type leak; mask any survivors.
   const emailRule = RULES.find(r => r.name === 'Email Address PII');
   return redactType(out, emailRule);
 }
@@ -345,9 +336,9 @@ function coverSection(R, data) {
   // Top row: logo + wordmark (left), report title/meta (right)
   drawLogo(R, MARGIN, y, 12);
   setFont(R, { size: 21, style: 'bold', color: P.text });
-  R.pdf.text('SecureGaurd', MARGIN + 17, y + 0.4, { baseline: 'top' });
+  R.pdf.text('SecureGaurd', MARGIN + 16, y + 0.4, { baseline: 'top' });
   setFont(R, { size: 7.5, style: 'bold', color: P.muted });
-  R.pdf.text('AI-ASSISTED SENSITIVE DATA LEAKAGE DETECTION', MARGIN + 17, y + 8.2, { baseline: 'top' });
+  R.pdf.text('AI-ASSISTED SENSITIVE DATA LEAKAGE DETECTION', MARGIN + 16, y + 8.2, { baseline: 'top' });
 
   setFont(R, { size: 12.5, style: 'bold', color: P.text });
   R.pdf.text('SECURITY ASSESSMENT REPORT', PAGE_W - MARGIN, y, { align: 'right', baseline: 'top' });
@@ -358,10 +349,10 @@ function coverSection(R, data) {
 
   // Accent divider
   R.pdf.setDrawColor(P.purple[0], P.purple[1], P.purple[2]);
-  R.pdf.setLineWidth(0.6);
+  R.pdf.setLineWidth(0.8);
   R.pdf.line(MARGIN, y, MARGIN + 62, y);
   R.pdf.setDrawColor(P.border[0], P.border[1], P.border[2]);
-  R.pdf.setLineWidth(0.2);
+  R.pdf.setLineWidth(0.3);
   R.pdf.line(MARGIN + 62, y, PAGE_W - MARGIN, y);
   y += 9;
 
@@ -377,8 +368,8 @@ function coverSection(R, data) {
   ];
   ex.forEach((line, i) => {
     if (i > 0 && R.y + lineH(9) * 2 > CONTENT_BOTTOM) newPage(R);
-    drawWrapped(R, line, MARGIN + 3.5, R.y, CONTENT_W - 7, 9);
-    R.y += lineH(9) + 1.1;
+    const usedH = drawWrapped(R, line, MARGIN + 3.5, R.y, CONTENT_W - 7, 9);
+    R.y += usedH + 2.5;
   });
   R.y += 4;
 
@@ -398,7 +389,7 @@ function coverSection(R, data) {
   const cards = [
     { label: 'Files Scanned', value: String(data.filesScanned), color: P.text, sub: 'key files' },
     { label: 'Findings', value: String(data.total), color: P.text, sub: 'detected' },
-    { label: 'Critical', value: String(data.sevCounts.Critical), color: [248, 113, 113], sub: 'exposures' },
+    { label: 'Critical', value: String(data.sevCounts.Critical), color: [220, 38, 38], sub: 'exposures' },
     { label: 'Risk Score', value: `${data.score}`, color: DEFAULT_COLORS.purple, sub: data.level }
   ];
   const gap = 4;
@@ -440,8 +431,8 @@ function coverSection(R, data) {
   });
 
   const markerX = meterX + Math.max(0.5, Math.min(100, data.score)) * scale;
-  R.pdf.setDrawColor(P.white[0], P.white[1], P.white[2]);
-  R.pdf.setLineWidth(1);
+  R.pdf.setDrawColor(P.text[0], P.text[1], P.text[2]);
+  R.pdf.setLineWidth(1.2);
   R.pdf.line(markerX, meterCardY + 9.6, markerX, meterCardY + 18.9);
   setFont(R, { size: 7.5, style: 'bold', color: P.text });
   R.pdf.text(String(data.score), markerX, meterCardY + 26, { align: 'center', baseline: 'top' });
@@ -459,7 +450,9 @@ function barRow(R, label, count, total, color, maxW = CONTENT_W - 30) {
   R.y += 4.4;
   const barH = 3.4;
   R.pdf.setFillColor(DEFAULT_COLORS.cardAlt[0], DEFAULT_COLORS.cardAlt[1], DEFAULT_COLORS.cardAlt[2]);
-  R.pdf.roundedRect(MARGIN, R.y, maxW, barH, 1, 1, 'F');
+  R.pdf.setDrawColor(DEFAULT_COLORS.border[0], DEFAULT_COLORS.border[1], DEFAULT_COLORS.border[2]);
+  R.pdf.setLineWidth(0.2);
+  R.pdf.roundedRect(MARGIN, R.y, maxW, barH, 1, 1, 'FD');
   if (count > 0 && total > 0) {
     const frac = Math.max(0.02, count / total);
     R.pdf.setFillColor(color[0], color[1], color[2]);
@@ -478,7 +471,7 @@ function overviewSection(R, data) {
   const order = ['Critical', 'High', 'Medium', 'Low'];
   const maxSev = Math.max(1, ...order.map(s => data.sevCounts[s]));
   order.forEach(s => {
-    barRow(R, s, data.sevCounts[s], maxSev, SEVERITY[s].bg);
+    barRow(R, s, data.sevCounts[s], maxSev, SEVERITY[s].fg);
   });
   R.y += 4;
 
@@ -508,12 +501,12 @@ function overviewSection(R, data) {
     R.pdf.text('No secret types detected.', MARGIN + 6, R.y + 2, { baseline: 'top' });
     R.y += 8;
   } else {
-    data.sortedTypes.forEach(([type, count]) => {
+    data.sortedTypes.forEach(([type, count], idx) => {
       ensure(R, 11);
-      R.pdf.setFillColor(P.bg[0], P.bg[1], P.bg[2]);
+      R.pdf.setFillColor(idx % 2 === 0 ? P.bg[0] : P.card[0], idx % 2 === 0 ? P.bg[1] : P.card[1], idx % 2 === 0 ? P.bg[2] : P.card[2]);
       R.pdf.rect(MARGIN, R.y, CONTENT_W, 9, 'F');
-      R.pdf.setDrawColor(P.borderSoft[0], P.borderSoft[1], P.borderSoft[2]);
-      R.pdf.setLineWidth(0.15);
+      R.pdf.setDrawColor(P.border[0], P.border[1], P.border[2]);
+      R.pdf.setLineWidth(0.2);
       R.pdf.line(MARGIN, R.y + 9, PAGE_W - MARGIN, R.y + 9);
       setFont(R, { size: 8.5, color: P.text });
       R.pdf.text(type, MARGIN + 6, R.y + 3.1, { baseline: 'top' });
@@ -563,7 +556,7 @@ function findingsSummarySection(R, data) {
   ];
 
   const headerH = 9;
-  drawRect(R, MARGIN, R.y, CONTENT_W, headerH, P.card, P.border);
+  drawRect(R, MARGIN, R.y, CONTENT_W, headerH, P.cardAlt, P.border);
   setFont(R, { size: 6.5, style: 'bold', color: P.faint });
   let hx = MARGIN;
   cols.forEach((c, i) => {
@@ -574,7 +567,7 @@ function findingsSummarySection(R, data) {
   R.y += headerH;
 
   function tableHeader() {
-    drawRect(R, MARGIN, R.y, CONTENT_W, headerH, P.card, P.border);
+    drawRect(R, MARGIN, R.y, CONTENT_W, headerH, P.cardAlt, P.border);
     setFont(R, { size: 6.5, style: 'bold', color: P.faint });
     let hx2 = MARGIN;
     cols.forEach((c, i) => {
@@ -587,7 +580,7 @@ function findingsSummarySection(R, data) {
 
   if (data.findings.length === 0) {
     ensure(R, 16);
-    drawRect(R, MARGIN, R.y, CONTENT_W, 14, P.cardAlt, P.border);
+    drawRect(R, MARGIN, R.y, CONTENT_W, 14, P.card, P.border);
     setFont(R, { size: 9, color: P.muted });
     R.pdf.text('No sensitive data exposures detected in the scanned codebase.', MARGIN + 6, R.y + 4.5, { baseline: 'top' });
     R.y += 18;
@@ -604,15 +597,18 @@ function findingsSummarySection(R, data) {
       tableHeader();
     }
 
-    R.pdf.setFillColor(i % 2 === 0 ? P.cardAlt[0] : P.card[0], i % 2 === 0 ? P.cardAlt[1] : P.card[1], i % 2 === 0 ? P.cardAlt[2] : P.card[2]);
+    R.pdf.setFillColor(i % 2 === 0 ? P.bg[0] : P.card[0], i % 2 === 0 ? P.bg[1] : P.card[1], i % 2 === 0 ? P.bg[2] : P.card[2]);
     R.pdf.rect(MARGIN, R.y, CONTENT_W, rowH, 'F');
+    R.pdf.setDrawColor(P.border[0], P.border[1], P.border[2]);
+    R.pdf.setLineWidth(0.2);
+    R.pdf.line(MARGIN, R.y + rowH, PAGE_W - MARGIN, R.y + rowH);
 
     let x = MARGIN;
     setFont(R, { size: 7.5, color: P.faint });
     R.pdf.text(String(i + 1), x + 4, R.y + 3, { baseline: 'top' });
     x += cols[0].w;
 
-    setFont(R, { size: 7.5, color: P.muted, font: 'courier' });
+    setFont(R, { size: 7.5, color: P.text, font: 'courier' });
     fileLines.forEach((ln, li) => {
       R.pdf.text(ln, x + 4, R.y + 3 + li * lineH(7.5), { baseline: 'top' });
     });
@@ -660,6 +656,7 @@ function measureCard(R, f) {
   const reason = f.reason || fallbackReason(f);
   const fix = f.fix || fallbackFix(f);
   const ctx = safeContext(f.codeContext || '', f.secretType);
+  const masked = maskedForFinding(f);
 
   const locationH = textValueH(R, `${f.file || ''}:${f.line ?? ''}`, colW, 7.5, 'courier');
   const verdictH = textValueH(R, f.decision || 'Unknown', colW, 7.5, 'helvetica');
@@ -670,14 +667,21 @@ function measureCard(R, f) {
   const rightH = 13.2 + verdictH + methodH;
   const gridH = Math.max(leftH, rightH);
 
-  const maskedH = 3 + 5.5 + 3;
+  const maskedLines = wrap(R, `> ${masked}`, fullW - 6, 7.5, 'courier', 'normal');
+  const shownMasked = maskedLines.slice(0, 2);
+  const maskedH = Math.max(5.5, shownMasked.length * lineH(7.5) + 3) + 3;
 
   let ctxH = 0;
   if (ctx) {
     const w = ctxWidth(ctx, fullW);
-    const lines = wrap(R, ctx, w, 6.5, 'courier', 'normal');
-    const truncated = lines.length > 8;
-    ctxH = 3 + Math.min(8, lines.length) * lineH(6.5) + 5 + (truncated ? 3 : 0);
+    const rawLines = ctx.split('\n');
+    let lineCount = 0;
+    rawLines.forEach(l => {
+      const sub = wrap(R, l, w - 6, 6.5, 'courier', 'normal');
+      lineCount += sub.length;
+    });
+    const truncated = lineCount > 8;
+    ctxH = Math.min(8, lineCount) * lineH(6.5) + 4 + (truncated ? 2 : 0) + 3;
   }
 
   const aiH = textValueH(R, reason, fullW, 8.5, 'helvetica');
@@ -750,34 +754,43 @@ function drawFindingCard(R, f, index) {
   yR = drawBlock(R, xR, 'DETECTION METHOD', DETECTION_METHOD, yR, colW);
   y = Math.max(yL, yR);
 
-  // Masked value (full width)
+  // Masked value (full width with wrapping)
   setFont(R, { size: 6.5, style: 'bold', color: P.purple });
   R.pdf.text('MASKED VALUE', xL, y, { baseline: 'top' });
   y += 3;
-  drawRect(R, xL, y, fullW, 5.5, P.bg, P.borderSoft);
-  setFont(R, { size: 7.5, color: [134, 239, 172] });
-  R.pdf.text(`> ${masked}`, xL + 3, y + 1.5, { baseline: 'top' });
-  y += 8.5;
+  const maskedLines = wrap(R, `> ${masked}`, fullW - 6, 7.5, 'courier', 'normal');
+  const shownMasked = maskedLines.slice(0, 2);
+  const maskedH = Math.max(5.5, shownMasked.length * lineH(7.5) + 3);
+  drawRect(R, xL, y, fullW, maskedH, P.cardAlt, P.border);
+  setFont(R, { size: 7.5, color: [22, 101, 52], font: 'courier' });
+  shownMasked.forEach((ln, li) => {
+    R.pdf.text(ln, xL + 3, y + 1.5 + li * lineH(7.5), { baseline: 'top' });
+  });
+  y += maskedH + 3;
 
   // Context snippet
   if (ctx) {
-    y += 2;
     setFont(R, { size: 6.5, style: 'bold', color: P.purple });
     R.pdf.text('CONTEXT SNIPPET (MASKED)', xL, y, { baseline: 'top' });
     y += 3;
     const w = ctxWidth(ctx, fullW);
-    const lines = wrap(R, ctx, w, 6.5, 'courier', 'normal');
-    const shown = lines.slice(0, 8);
-    const truncated = lines.length > 8;
-    const ctxH = Math.min(8, lines.length) * lineH(6.5) + 5;
-    drawRect(R, xL, y, w, ctxH, P.bg, P.borderSoft);
+    const rawLines = ctx.split('\n');
+    const wrappedLines = [];
+    rawLines.forEach(l => {
+      const sub = wrap(R, l, w - 6, 6.5, 'courier', 'normal');
+      wrappedLines.push(...sub);
+    });
+    const shown = wrappedLines.slice(0, 8);
+    const truncated = wrappedLines.length > 8;
+    const ctxH = Math.min(8, shown.length) * lineH(6.5) + 4;
+    drawRect(R, xL, y, w, ctxH, P.cardAlt, P.border);
     setFont(R, { size: 6.5, color: P.muted, font: 'courier' });
     shown.forEach((ln, i) => {
-      R.pdf.text(ln === '' ? ' ' : ln.substring(0, 160), xL + 3, y + 2 + i * lineH(6.5), { baseline: 'top' });
+      R.pdf.text(ln === '' ? ' ' : ln, xL + 3, y + 2 + i * lineH(6.5), { baseline: 'top' });
     });
     y += ctxH;
     if (truncated) {
-      y += 3;
+      y += 2;
       setFont(R, { size: 6.5, color: P.faint });
       R.pdf.text('... context snippet truncated for brevity', xL, y, { baseline: 'top' });
     }
@@ -854,7 +867,6 @@ function remediationSection(R, data) {
       ensure(R, itemH + 2);
       setFont(R, { size: 8, color: P.text });
       const lines = wrap(R, `-  ${item}`, CONTENT_W - 12, 8);
-      setFont(R, { size: 8, color: P.text });
       let ly = R.y;
       lines.forEach((ln, li) => {
         R.pdf.text(ln, MARGIN + 6, ly + li * lineH(8), { baseline: 'top' });
@@ -882,8 +894,9 @@ function remediationSection(R, data) {
     ensure(R, 9);
     const boxSize = 3.6;
     R.pdf.setDrawColor(P.muted[0], P.muted[1], P.muted[2]);
+    R.pdf.setFillColor(255, 255, 255);
     R.pdf.setLineWidth(0.3);
-    R.pdf.rect(MARGIN + 1, R.y + 0.6, boxSize, boxSize, 'S');
+    R.pdf.rect(MARGIN + 1, R.y + 0.6, boxSize, boxSize, 'FD');
     drawWrapped(R, item, MARGIN + 8, R.y, CONTENT_W - 12, 8.5);
     R.y += wrappedHeight(R, item, CONTENT_W - 12, 8.5) + 2.4;
   });
@@ -909,7 +922,7 @@ function conclusionSection(R, data) {
     const itemH = wrappedHeight(R, step, CONTENT_W - 12, 8.5);
     ensure(R, itemH + 2);
     R.pdf.setFillColor(P.purple[0], P.purple[1], P.purple[2]);
-    R.pdf.circle(MARGIN + 2.6, R.y + 2, 1.3, 'F');
+    R.pdf.circle(MARGIN + 2.6, R.y + 2, 1.2, 'F');
     drawWrapped(R, step, MARGIN + 7.5, R.y, CONTENT_W - 12, 8.5, { color: P.muted });
     R.y += itemH + 2.6;
   });
@@ -931,20 +944,20 @@ function stampHeaderFooter(pdf, data, page, total) {
   // Header
   setFont({ pdf }, { size: 7.5, style: 'bold', color: P.text });
   pdf.text('SecureGaurd', MARGIN, 6.4, { baseline: 'top' });
+  const brandW = pdf.getTextWidth('SecureGaurd');
   setFont({ pdf }, { size: 7.5, color: P.faint });
-  pdf.text('  |  AI-Assisted Sensitive Data Leakage Detection', MARGIN + 12.5, 6.4, { baseline: 'top' });
-  setFont({ pdf }, { size: 7.5, color: P.faint });
+  pdf.text('  |  AI-Assisted Sensitive Data Leakage Detection', MARGIN + brandW, 6.4, { baseline: 'top' });
   pdf.text('Security Assessment Report', PAGE_W - MARGIN, 6.4, { align: 'right', baseline: 'top' });
   pdf.setDrawColor(P.purple[0], P.purple[1], P.purple[2]);
   pdf.setLineWidth(0.7);
   pdf.line(MARGIN, 13.2, MARGIN + 34, 13.2);
   pdf.setDrawColor(P.border[0], P.border[1], P.border[2]);
-  pdf.setLineWidth(0.2);
+  pdf.setLineWidth(0.3);
   pdf.line(MARGIN + 34, 13.2, PAGE_W - MARGIN, 13.2);
 
   // Footer
   pdf.setDrawColor(P.border[0], P.border[1], P.border[2]);
-  pdf.setLineWidth(0.2);
+  pdf.setLineWidth(0.3);
   pdf.line(MARGIN, 280.2, PAGE_W - MARGIN, 280.2);
   setFont({ pdf }, { size: 7, color: P.faint });
   const footerLeft = `SecureGaurd Security Assessment - ${data.scanName}`.slice(0, 46);

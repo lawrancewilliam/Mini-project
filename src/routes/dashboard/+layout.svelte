@@ -2,10 +2,18 @@
   import { appState } from '$lib/state.svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
+  import CustomSelect from '$lib/CustomSelect.svelte';
 
   let { children } = $props();
   let showLogoutModal = $state(false);
   let isMobileMenuOpen = $state(false);
+
+  const projectOptions = $derived(() => {
+    return appState.projects.map(p => {
+      const rec = appState.scans.find(s => s.projectId === p.id);
+      return rec ? { value: rec.id, label: rec.projectName } : null;
+    }).filter(Boolean);
+  });
 
   const DEVELOPER_ONLY_PATHS = [
     '/dashboard/upload',
@@ -233,25 +241,37 @@
         </h2>
       </div>
 
-<!-- Active Scan Project Selector -->
-      <div class="flex items-center gap-3 bg-bg-warm px-4 py-2 border border-accent-purple/30 focus-within:border-accent-purple focus-within:ring-2 focus-within:ring-accent-purple/20 rounded-2xl max-w-xs w-full sm:w-auto transition-all purple-glow">
-        <span class="text-xs font-bold text-accent-purple uppercase tracking-wider whitespace-nowrap">Target:</span>
-        {#if appState.scans.length > 0}
-          <select
-            value={appState.selectedScanId}
-            onchange={(e) => appState.setSelectedScan(e.target.value)}
-            class="bg-transparent text-sm font-bold text-dark-charcoal border-none focus:outline-none w-full cursor-pointer"
-          >
-            {#each appState.projects as p}
-              {@const rec = appState.scans.find(s => s.projectId === p.id)}
-              {#if rec}
-                <option value={rec.id} class="bg-card-warm font-semibold text-dark-charcoal">{rec.projectName}</option>
-              {/if}
-            {/each}
-          </select>
-        {:else}
-          <span class="text-sm font-bold text-dark-charcoal/50">No scans available</span>
-        {/if}
+<!-- Theme Toggle & Active Scan Project Selector -->
+      <div class="flex items-center gap-3">
+        <button
+          onclick={() => appState.toggleTheme()}
+          class="p-2.5 rounded-2xl border border-dark-charcoal/10 bg-bg-warm hover:bg-dark-charcoal/10 transition-all duration-200 cursor-pointer shrink-0"
+          title={appState.theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+        >
+          {#if appState.theme === 'dark'}
+            <svg class="w-5 h-5 text-dark-charcoal" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+            </svg>
+          {:else}
+            <svg class="w-5 h-5 text-dark-charcoal" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+            </svg>
+          {/if}
+        </button>
+
+        <div class="flex items-center gap-2 bg-bg-warm px-3.5 py-1.5 border border-dark-charcoal/15 rounded-xl transition-all shadow-sm">
+          <span class="text-xs font-bold text-accent-purple uppercase tracking-wider whitespace-nowrap">Target:</span>
+          {#if appState.scans.length > 0}
+            <CustomSelect
+              options={projectOptions()}
+              value={appState.selectedScanId}
+              onChange={(id) => appState.setSelectedScan(id)}
+              buttonClass="bg-transparent border-none py-0.5 text-sm font-semibold text-dark-charcoal focus:outline-none"
+            />
+          {:else}
+            <span class="text-sm font-bold text-dark-charcoal/50">No scans available</span>
+          {/if}
+        </div>
       </div>
     </header>
 

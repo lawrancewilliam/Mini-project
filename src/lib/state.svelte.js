@@ -64,6 +64,7 @@ export function authErrorMessage(error) {
 class AppState {
   currentUser = $state(null);
   authLoading = $state(true);
+  theme = $state('dark');
   scans = $state([]);
   projects = $state([]);
   selectedProjectId = $state(null);
@@ -98,6 +99,32 @@ class AppState {
 
     this.selectedScanId = null;
     this.selectedProjectId = null;
+
+    const savedTheme = localStorage.getItem('secureguard_theme') || 'dark';
+    this.theme = savedTheme;
+    this.applyTheme(savedTheme);
+  }
+
+  toggleTheme() {
+    const next = this.theme === 'dark' ? 'light' : 'dark';
+    this.theme = next;
+    if (browser) {
+      localStorage.setItem('secureguard_theme', next);
+      this.applyTheme(next);
+    }
+  }
+
+  applyTheme(themeName) {
+    if (!browser) return;
+    const t = themeName || this.theme || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    if (t === 'dark') {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+    } else {
+      document.documentElement.classList.add('light');
+      document.documentElement.classList.remove('dark');
+    }
   }
 
   async refreshDashboard() {

@@ -1,10 +1,5 @@
 <script>
   import { appState } from '$lib/state.svelte';
-  import { onMount } from 'svelte';
-
-  
-  let cubeContainer = $state(null);
-  let cubeInstance = $state(null);
 
   function scrollToId(id) {
     const el = document.getElementById(id);
@@ -12,26 +7,6 @@
       el.scrollIntoView({ behavior: 'smooth' });
     }
   }
-  
-  onMount(() => {
-    let active = true;
-    if (cubeContainer) {
-      import('$lib/3d-cube.js').then(({ create3DFloatingLock }) => {
-        if (active && cubeContainer) {
-          cubeInstance = create3DFloatingLock(cubeContainer, !!appState.currentUser);
-        }
-      }).catch(err => {
-        console.error('Failed to load 3D lock module:', err);
-      });
-    }
-    return () => {
-      active = false;
-      if (cubeInstance) {
-        cubeInstance.dispose();
-        cubeInstance = null;
-      }
-    };
-  });
 </script>
 
 <!-- Navigation -->
@@ -102,9 +77,7 @@
       </svg>
       <!-- Glow Ball -->
       <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-accent-purple rounded-full filter blur-[120px]"></div>
-      
-      <!-- 3D Cube Animation -->
-      <div bind:this={cubeContainer} class="absolute top-1/3 right-1/4 w-20 h-20"></div>
+
     </div>
 
     <div class="max-w-5xl mx-auto text-center relative z-10">
@@ -385,9 +358,6 @@
             Sign In Now
           </a>
         {/if}
-        <button onclick={() => alert('Support ticket system simulation! Write to support@secur.ai')} class="bg-transparent border border-bg-warm/30 text-bg-warm px-8 py-3.5 rounded-xl font-semibold hover:bg-bg-warm/10 transition-all duration-300 cursor-pointer">
-          Contact Sales
-        </button>
       </div>
     </div>
   </section>
