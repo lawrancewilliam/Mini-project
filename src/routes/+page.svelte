@@ -1,5 +1,6 @@
 <script>
   import { appState } from '$lib/state.svelte';
+  import BackgroundAnimation from '$lib/BackgroundAnimation.svelte';
 
   function scrollToId(id) {
     const el = document.getElementById(id);
@@ -62,23 +63,11 @@
   </div>
 </header>
 
-<main id="home">
+<main id="home" class="relative">
+  <BackgroundAnimation />
   <!-- Hero Section -->
   <section class="relative pt-20 pb-24 px-6 overflow-hidden">
-    <div class="absolute inset-0 z-0 opacity-15 pointer-events-none">
-      <!-- Grid Background Pattern -->
-      <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
-        <defs>
-          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#222222" stroke-width="1" />
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#grid)" />
-      </svg>
-      <!-- Glow Ball -->
-      <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-accent-purple rounded-full filter blur-[120px]"></div>
 
-    </div>
 
     <div class="max-w-5xl mx-auto text-center relative z-10">
       <div class="inline-flex items-center gap-2 bg-card-warm/80 border border-accent-purple/30 px-4 py-1.5 rounded-full text-xs font-bold text-accent-purple mb-8 tracking-wider uppercase">
