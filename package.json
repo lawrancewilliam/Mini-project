@@ -24,6 +24,7 @@
 		"@neondatabase/serverless": "^1.1.0",
 		"@supabase/supabase-js": "^2.115.0",
 		"chart.js": "^4.5.1",
+		"groq-sdk": "^1.6.0",
 		"html2canvas": "^1.4.1",
 		"jspdf": "^4.2.1",
 		"jszip": "^3.10.1",

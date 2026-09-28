@@ -287,19 +287,19 @@
     </div>
 
     <!-- Recent Scan History Table -->
-    <div class="bg-card-warm border border-dark-charcoal/10 rounded-3xl p-6 shadow-sm">
-      <div class="flex items-center justify-between mb-6">
-        <div>
+    <div class="bg-card-warm border border-dark-charcoal/10 rounded-3xl p-4 sm:p-6 shadow-sm">
+      <div class="flex items-center justify-between gap-3 mb-6">
+        <div class="min-w-0">
           <h3 class="text-lg font-bold font-display text-dark-charcoal">Recent Scan History</h3>
           <p class="text-xs text-dark-charcoal/60 mt-1">Manage and preview past runs</p>
         </div>
-        <a href="/dashboard/history" class="text-xs font-bold bg-bg-warm border border-dark-charcoal/15 px-3 py-1.5 rounded-lg text-dark-charcoal hover:bg-dark-charcoal hover:text-bg-warm transition-all">
+        <a href="/dashboard/history" class="text-xs font-bold bg-bg-warm border border-dark-charcoal/15 px-3 py-1.5 rounded-lg text-dark-charcoal hover:bg-dark-charcoal hover:text-bg-warm transition-all shrink-0 whitespace-nowrap">
           View All History
         </a>
       </div>
 
       <div class="overflow-x-auto">
-        <table class="w-full border-collapse text-left">
+        <table class="w-full border-collapse text-left min-w-[700px]">
           <thead>
             <tr class="border-b border-dark-charcoal/10 text-xs font-bold text-dark-charcoal/50 uppercase tracking-wider">
               <th class="py-3 px-4">Project Name</th>

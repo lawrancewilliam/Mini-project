@@ -1,6 +1,6 @@
 import { browser } from '$app/environment';
 import JSZip from 'jszip';
-import { analyzeContext, analyzeWithOllama, VERDICTS } from '$lib/ai-engine.js';
+import { analyzeContext, analyzeWithGroq, VERDICTS } from '$lib/ai-engine.js';
 import { supabase } from '$lib/supabase.js';
 import { loadDashboardData, persistScanResult, deleteScanFromSupabase } from '$lib/dashboard.js';
 import { RULES } from '$lib/detection-rules.js';
@@ -547,10 +547,10 @@ class AppState {
           const lineFindings = [];
           for (const hit of hitRecords) {
             const rule = hit.rule;
-            const shouldUseOllama = rule.weight >= 8;
+            const shouldUseLLM = rule.weight >= 8;
             let aiResult;
-            if (shouldUseOllama) {
-              aiResult = await analyzeWithOllama({
+            if (shouldUseLLM) {
+              aiResult = await analyzeWithGroq({
                 filePath: relativePath,
                 matchedValue: hit.matchedValue,
                 lineContent: line,
@@ -610,6 +610,7 @@ class AppState {
               decision: decision,
               confidence: confidence,
               reason: reason,
+              analysisEngine: aiResult.analysisEngine || null,
               signalDetails: aiResult.signalDetails,
               fix: rule.fix,
               bestPractice: rule.bestPractice

@@ -11,9 +11,9 @@
 </script>
 
 <!-- Navigation -->
-<header class="sticky top-0 z-50 bg-bg-warm/80 backdrop-blur-md border-b border-dark-charcoal/10 px-6 py-4">
-  <div class="max-w-7xl mx-auto flex items-center justify-between">
-    <a href="/" class="flex items-center gap-2 text-2xl font-bold font-display tracking-tight text-dark-charcoal">
+<header class="sticky top-0 z-50 bg-bg-warm/80 backdrop-blur-md border-b border-dark-charcoal/10 px-4 sm:px-6 py-4">
+  <div class="max-w-7xl mx-auto flex items-center justify-between gap-3">
+    <a href="/" class="flex items-center gap-2 text-xl sm:text-2xl font-bold font-display tracking-tight text-dark-charcoal shrink-0">
       <svg class="w-8 h-8 text-accent-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
       </svg>
@@ -28,7 +28,7 @@
       <button onclick={() => scrollToId('contact')} class="hover:text-accent-purple transition-colors cursor-pointer">Contact</button>
     </nav>
 
-    <div class="flex items-center gap-3">
+    <div class="flex items-center gap-2 sm:gap-3 shrink-0">
       <button
         onclick={() => appState.toggleTheme()}
         class="p-2.5 rounded-xl border border-dark-charcoal/10 bg-bg-warm hover:bg-dark-charcoal/10 transition-all duration-200 cursor-pointer"
@@ -45,17 +45,17 @@
         {/if}
       </button>
       {#if appState.currentUser}
-        <a href="/dashboard" class="inline-flex items-center gap-2 bg-dark-charcoal text-bg-warm px-5 py-2.5 rounded-xl font-semibold hover:bg-accent-purple hover:text-bg-warm transition-all duration-300 shadow-md">
+        <a href="/dashboard" class="inline-flex items-center gap-2 bg-dark-charcoal text-bg-warm px-4 sm:px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-accent-purple hover:text-bg-warm transition-all duration-300 shadow-md">
           Dashboard
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
           </svg>
         </a>
       {:else}
-        <a href="/login" class="text-sm font-bold text-dark-charcoal hover:text-accent-purple transition-colors">
+        <a href="/login" class="text-sm font-bold text-dark-charcoal hover:text-accent-purple transition-colors px-1">
           Sign In
         </a>
-        <a href="/register" class="inline-flex items-center gap-2 bg-accent-purple text-bg-warm px-5 py-2.5 rounded-xl font-bold hover:bg-dark-charcoal hover:text-bg-warm transition-all duration-300 shadow-md purple-glow">
+        <a href="/register" class="inline-flex items-center gap-2 bg-accent-purple text-bg-warm px-4 sm:px-5 py-2.5 rounded-xl text-sm sm:text-base font-bold hover:bg-dark-charcoal hover:text-bg-warm transition-all duration-300 shadow-md purple-glow">
           Register
         </a>
       {/if}
@@ -70,7 +70,7 @@
 
 
     <div class="max-w-5xl mx-auto text-center relative z-10">
-      <div class="inline-flex items-center gap-2 bg-card-warm/80 border border-accent-purple/30 px-4 py-1.5 rounded-full text-xs font-bold text-accent-purple mb-8 tracking-wider uppercase">
+      <div class="inline-flex items-center gap-2 bg-card-warm/80 border border-accent-purple/30 px-4 py-1.5 rounded-full text-[10px] sm:text-xs font-bold text-accent-purple mb-8 tracking-wider uppercase text-center">
         <span class="flex h-2 w-2 relative">
           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-purple opacity-75"></span>
           <span class="relative inline-flex rounded-full h-2 w-2 bg-accent-purple"></span>
@@ -78,7 +78,7 @@
         v2.4 Release: Deep Neural Credential Matching
       </div>
       
-      <h1 class="text-5xl md:text-7xl font-extrabold font-display leading-tight tracking-tight mb-6">
+      <h1 class="text-4xl sm:text-5xl md:text-7xl font-extrabold font-display leading-tight tracking-tight mb-6">
         <span class="text-accent-purple">AI-Assisted Sensitive</span> <br />
         <span class="text-dark-charcoal">Data Leakage Detection</span>
       </h1>

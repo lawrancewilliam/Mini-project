@@ -165,7 +165,7 @@
     </div>
 
     <!-- Main Results Container -->
-    <div class="bg-card-warm border border-dark-charcoal/10 rounded-3xl p-6 shadow-sm space-y-6">
+    <div class="bg-card-warm border border-dark-charcoal/10 rounded-3xl p-4 sm:p-6 shadow-sm space-y-6">
       
       <!-- Filter Controls Header -->
       <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-dark-charcoal/10 pb-6">
@@ -185,7 +185,7 @@
         <!-- Right: Toggles -->
         <div class="flex flex-wrap items-center gap-3">
           <!-- Severity Filter -->
-          <div class="flex items-center gap-1.5 bg-bg-warm border border-dark-charcoal/10 p-1 rounded-xl">
+          <div class="flex flex-wrap items-center gap-1.5 bg-bg-warm border border-dark-charcoal/10 p-1 rounded-xl max-w-full">
             {#each ['All', 'Critical', 'High', 'Medium', 'Low'] as sev}
               <button
                 onclick={() => selectedSeverity = sev}
@@ -214,7 +214,7 @@
 
       <!-- Detections Table -->
       <div class="overflow-x-auto">
-        <table class="w-full border-collapse text-left">
+        <table class="w-full border-collapse text-left min-w-[760px]">
           <thead>
             <tr class="border-b border-dark-charcoal/10 text-xs font-bold text-dark-charcoal/50 uppercase tracking-wider select-none">
               <th onclick={() => toggleSort('file')} class="py-3 px-4 cursor-pointer hover:text-accent-purple transition-colors">

@@ -1,8 +1,13 @@
 import { ML_TRAINING_DATA } from './training-data.js';
 import { REFERENCE_DATA } from './reference-data.js';
+import { RULES } from './detection-rules.js';
+import { maskSensitiveValue, redactMatches, spanForMatch } from './masking.js';
 
 const REF_EXACT = new Set(REFERENCE_DATA.exact);
 const REF_HEADTAIL = new Set(REFERENCE_DATA.headTail);
+
+// Context window (per side) shared with the server-side prompt guard.
+const GROQ_CONTEXT_LINES = 10;
 
 export const VERDICTS = {
   LEAK_CONFIRMED: 'Leak Confirmed',
@@ -10,6 +15,8 @@ export const VERDICTS = {
   TEST_DATA: 'Test Data',
   FALSE_POSITIVE: 'False Positive'
 };
+
+const VERDICT_VALUES = Object.values(VERDICTS);
 
 function calculateEntropy(str) {
   const freq = {};
@@ -617,50 +624,112 @@ function analyzeWithHeuristicRules({ filePath, matchedValue, lineContent, allLin
   };
 }
 
-export async function analyzeWithOllama({ filePath, matchedValue, lineContent, allLines, lineIndex, secretType }) {
-  const lines = allLines;
-  const beforeLines = lines.slice(Math.max(0, lineIndex - 10), lineIndex);
-  const afterLines = lines.slice(lineIndex + 1, lineIndex + 11);
+// Redact a single source line so no detected value can leave the browser.
+// Mirrors the server-side guard: every rule hit on the line is replaced by its
+// masked form, so the code stays readable while every secret is hidden.
+// Exported for the masking test harnesses.
+export function maskContextLine(line, secretType) {
+  if (line == null) return '';
+  const text = String(line);
+  const occurrences = [];
+  for (const rule of RULES) {
+    rule.regex.lastIndex = 0;
+    let m;
+    while ((m = rule.regex.exec(text)) !== null) {
+      const span = spanForMatch(m, rule);
+      if (span.length <= 0) continue;
+      occurrences.push({
+        index: span.index,
+        length: span.length,
+        maskedValue: maskSensitiveValue(span.raw, rule.name === secretType ? secretType : rule.name)
+      });
+    }
+  }
+  return redactMatches(text, occurrences);
+}
 
+// Layer 2 — Groq Cloud contextual validation.
+//
+//   TF-IDF/ML classification runs FIRST, then its verdict/confidence is handed
+//   to Groq together with masked-only metadata. If Groq is unavailable, times
+//   out, is rate limited, returns malformed output or throws, the ML result is
+//   returned unchanged so a project scan can never fail.
+export async function analyzeWithGroq({ filePath, matchedValue, lineContent, allLines, lineIndex, secretType }) {
+  const lines = Array.isArray(allLines) ? allLines : [];
+  const idx = Number.isFinite(lineIndex) ? lineIndex : 0;
+
+  // Step 1 — existing TF-IDF + cosine-similarity / heuristic classification.
+  const mlResult = analyzeContext({ filePath, matchedValue, lineContent, allLines, lineIndex, secretType });
+
+  // Step 2 — mask the value and the context window before anything is sent.
+  const maskedValue = maskSensitiveValue(matchedValue, secretType);
+  const beforeLines = lines
+    .slice(Math.max(0, idx - GROQ_CONTEXT_LINES), idx)
+    .map(l => maskContextLine(l, secretType));
+  const afterLines = lines
+    .slice(idx + 1, idx + 1 + GROQ_CONTEXT_LINES)
+    .map(l => maskContextLine(l, secretType));
+  const redactedLine = maskContextLine(lineContent, secretType);
+
+  let groq = null;
   try {
     const response = await fetch('/api/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        secretType,
         filePath,
-        lineContent,
+        maskedValue,
+        lineContent: redactedLine,
         beforeLines,
         afterLines,
-        secretType,
-        matchedValue
+        mlVerdict: mlResult.decision,
+        mlConfidence: mlResult.confidence,
+        mlEngine: mlResult.engine,
+        entropy: Math.round(calculateEntropy(String(matchedValue || '')) * 100) / 100
       })
     });
 
-    const result = await response.json();
-
-    if (!result.success) {
-      const fallback = analyzeContext({ filePath, matchedValue, lineContent, allLines, lineIndex, secretType });
-      return { ...fallback, engine: `ollama-unavailable (fallback: ${fallback.engine})` };
+    if (response.ok) {
+      const body = await response.json();
+      // Defensive: only trust a verdict from the known set. Anything else is
+      // treated exactly like a failed call and falls through to the ML result.
+      const verdict = VERDICT_VALUES.find(
+        v => v.toLowerCase() === String(body?.verdict == null ? '' : body.verdict).trim().toLowerCase()
+      );
+      const confidence = Number(body?.confidence);
+      if (body?.success === true && verdict && Number.isFinite(confidence)) {
+        groq = { ...body, verdict, confidence: Math.max(0, Math.min(100, Math.round(confidence))) };
+      }
     }
-
-    const signalDetails = [
-      { name: 'LLM Analysis', score: result.confidence / 100, evidence: result.reason }
-    ];
-
-    const fallback = analyzeContext({ filePath, matchedValue, lineContent, allLines, lineIndex, secretType });
-    for (const s of fallback.signalDetails) {
-      if (s.name !== 'LLM Analysis') signalDetails.push(s);
-    }
-
-    return {
-      decision: result.decision,
-      confidence: result.confidence,
-      reason: result.reason,
-      signalDetails,
-      engine: `ollama (${result.model || 'llama3.2'})`
-    };
-  } catch (err) {
-    const fallback = analyzeContext({ filePath, matchedValue, lineContent, allLines, lineIndex, secretType });
-    return { ...fallback, engine: `ollama-error (fallback: ${fallback.engine})` };
+  } catch {
+    groq = null;
   }
+
+  // Step 3 — any Groq failure falls back to the ML result.
+  if (!groq) {
+    return {
+      ...mlResult,
+      recommendation: null,
+      analysisEngine: 'ML Fallback',
+      engine: `ml-fallback (${mlResult.engine})`
+    };
+  }
+
+  const signalDetails = [
+    { name: 'LLM Analysis', score: groq.confidence / 100, evidence: groq.reason }
+  ];
+  for (const s of mlResult.signalDetails) {
+    if (s.name !== 'LLM Analysis') signalDetails.push(s);
+  }
+
+  return {
+    decision: groq.verdict,
+    confidence: groq.confidence,
+    reason: groq.reason,
+    recommendation: groq.recommendation || null,
+    signalDetails,
+    analysisEngine: groq.analysisEngine || 'Groq LLM',
+    engine: `groq-llm (${groq.model || 'openai/gpt-oss-20b'})`
+  };
 }

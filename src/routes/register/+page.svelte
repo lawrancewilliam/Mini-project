@@ -1,6 +1,7 @@
 <script>
   import { appState, authErrorMessage } from '$lib/state.svelte';
   import { goto } from '$app/navigation';
+  import PasswordField from '$lib/PasswordField.svelte';
 
   let firstName = $state('');
   let lastName = $state('');
@@ -163,7 +164,7 @@
   </div>
 
   <!-- Left: Form Panel -->
-  <div class="vt-auth-form flex-1 flex items-center justify-center p-6 lg:p-10 relative z-10">
+  <div class="vt-auth-form flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-10 relative z-10">
     <div class="w-full max-w-md">
       <!-- Compact brand for mobile -->
       <a href="/" class="lg:hidden inline-flex items-center gap-2 text-xl font-bold font-display text-dark-charcoal mb-8">
@@ -181,7 +182,7 @@
         Back to Home
       </a>
 
-      <div class="bg-card-warm rounded-3xl p-8 border border-dark-charcoal/10 shadow-xl purple-glow">
+      <div class="bg-card-warm rounded-3xl p-6 sm:p-8 border border-dark-charcoal/10 shadow-xl purple-glow">
         <div class="mb-8">
           <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-accent-purple/10 text-accent-purple mb-4">
             <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -194,7 +195,7 @@
 
         <form onsubmit={handleRegister} class="space-y-5">
           <!-- Names -->
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label for="first-name" class="block text-sm font-bold text-dark-charcoal/70 mb-2">First Name</label>
               <input
@@ -233,17 +234,15 @@
           </div>
 
           <!-- Password -->
-          <div>
-            <label for="password" class="block text-sm font-bold text-dark-charcoal/70 mb-2">Password</label>
-            <input
-              type="password"
-              id="password"
-              bind:value={password}
-              required
-              placeholder="•••••••• (Min 6 chars)"
-              class="w-full bg-bg-warm border border-dark-charcoal/15 px-4 py-3 rounded-xl text-dark-charcoal font-semibold focus:outline-none focus:border-accent-purple purple-glow-border transition-all"
-            />
-          </div>
+          <PasswordField
+            id="password"
+            label="Password"
+            bind:value={password}
+            required
+            placeholder="•••••••• (Min 6 chars)"
+            autocomplete="new-password"
+            inputClass="py-3"
+          />
 
           <!-- Error Msg -->
           {#if errorMsg}

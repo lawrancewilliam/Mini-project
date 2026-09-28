@@ -2,6 +2,7 @@
   import { appState, authErrorMessage } from '$lib/state.svelte';
   import { supabase } from '$lib/supabase.js';
   import { goto } from '$app/navigation';
+  import PasswordField from '$lib/PasswordField.svelte';
 
   // Profile fields state
   let profileName = $state('');
@@ -177,42 +178,38 @@
         <p class="text-xs text-dark-charcoal/60 mb-6 font-semibold">Change credentials required to authenticate this active user</p>
         
         <form onsubmit={handleChangePassword} class="space-y-4">
-          <div>
-            <label for="old-pass" class="block text-xs font-bold text-dark-charcoal/70 mb-1.5">Current Password</label>
-            <input
-              type="password"
-              id="old-pass"
-              bind:value={oldPassword}
-              required
-              placeholder="••••••••"
-              class="w-full bg-bg-warm border border-dark-charcoal/15 px-4 py-2.5 rounded-xl text-sm font-semibold text-dark-charcoal focus:outline-none focus:border-accent-purple purple-glow-border transition-all"
-            />
-          </div>
+          <PasswordField
+            id="old-pass"
+            label="Current Password"
+            labelClass="text-xs"
+            bind:value={oldPassword}
+            required
+            placeholder="••••••••"
+            inputClass="py-2.5"
+          />
 
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label for="new-pass" class="block text-xs font-bold text-dark-charcoal/70 mb-1.5">New Password</label>
-              <input
-                type="password"
-                id="new-pass"
-                bind:value={newPassword}
-                required
-                placeholder="Min 6 chars"
-                class="w-full bg-bg-warm border border-dark-charcoal/15 px-4 py-2.5 rounded-xl text-sm font-semibold text-dark-charcoal focus:outline-none focus:border-accent-purple purple-glow-border transition-all"
-              />
-            </div>
-            
-            <div>
-              <label for="conf-pass" class="block text-xs font-bold text-dark-charcoal/70 mb-1.5">Confirm Password</label>
-              <input
-                type="password"
-                id="conf-pass"
-                bind:value={confirmPassword}
-                required
-                placeholder="Re-type password"
-                class="w-full bg-bg-warm border border-dark-charcoal/15 px-4 py-2.5 rounded-xl text-sm font-semibold text-dark-charcoal focus:outline-none focus:border-accent-purple purple-glow-border transition-all"
-              />
-            </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <PasswordField
+              id="new-pass"
+              label="New Password"
+              labelClass="text-xs"
+              bind:value={newPassword}
+              required
+              placeholder="Min 6 chars"
+              autocomplete="new-password"
+              inputClass="py-2.5"
+            />
+
+            <PasswordField
+              id="conf-pass"
+              label="Confirm Password"
+              labelClass="text-xs"
+              bind:value={confirmPassword}
+              required
+              placeholder="Re-type password"
+              autocomplete="new-password"
+              inputClass="py-2.5"
+            />
           </div>
 
           {#if passwordError}

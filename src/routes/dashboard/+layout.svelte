@@ -140,15 +140,21 @@
 {:else if appState.currentUser}
 <div class="min-h-screen flex flex-col md:flex-row bg-bg-warm">
   <!-- Mobile Header -->
-  <div class="md:hidden flex items-center justify-between bg-card-warm border-b border-dark-charcoal/10 px-6 py-4">
-    <div class="flex items-center gap-2 text-xl font-bold font-display text-dark-charcoal">
+  <div class="md:hidden flex items-center justify-between gap-2 bg-card-warm border-b border-dark-charcoal/10 px-4 sm:px-6 py-4">
+    <div class="flex items-center gap-2 text-xl font-bold font-display text-dark-charcoal min-w-0">
       <svg class="w-6 h-6 text-accent-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
       </svg>
       <span>Secure<span class="text-accent-purple">Gaurd</span></span>
     </div>
     
-    <button onclick={() => isMobileMenuOpen = !isMobileMenuOpen} class="text-dark-charcoal p-1 focus:outline-none">
+    <button
+      onclick={() => isMobileMenuOpen = !isMobileMenuOpen}
+      class="text-dark-charcoal p-1 shrink-0 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-purple/50"
+      aria-label="Toggle navigation menu"
+      aria-expanded={isMobileMenuOpen}
+      aria-controls="dashboard-mobile-nav"
+    >
       {#if isMobileMenuOpen}
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
       {:else}
@@ -158,7 +164,7 @@
   </div>
 
   <!-- Sidebar Panel -->
-  <aside class="w-full md:w-64 bg-card-warm border-r border-dark-charcoal/10 flex-col justify-between p-6 shrink-0 md:flex {isMobileMenuOpen ? 'flex' : 'hidden md:flex'}">
+  <aside id="dashboard-mobile-nav" class="w-full md:w-64 bg-card-warm border-r border-dark-charcoal/10 flex-col justify-between p-4 sm:p-6 shrink-0 md:flex {isMobileMenuOpen ? 'flex' : 'hidden md:flex'}">
     <div>
       <!-- Brand Logo -->
       <a href="/" class="hidden md:flex items-center gap-2 text-2xl font-bold font-display tracking-tight text-dark-charcoal mb-8">
@@ -210,9 +216,9 @@
   <!-- Main Content Space -->
   <div class="flex-1 flex flex-col min-w-0">
     <!-- Header Topbar -->
-    <header class="bg-card-warm border-b border-dark-charcoal/10 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div class="flex items-center gap-3">
-        <h2 class="text-xl font-extrabold font-display text-dark-charcoal tracking-tight">
+    <header class="bg-card-warm border-b border-dark-charcoal/10 px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div class="flex items-center gap-3 min-w-0">
+        <h2 class="text-xl font-extrabold font-display text-dark-charcoal tracking-tight truncate">
           {#if page.url.pathname === '/dashboard'}
             Security Dashboard
           {:else if page.url.pathname.includes('/upload')}
@@ -242,7 +248,7 @@
       </div>
 
 <!-- Theme Toggle & Active Scan Project Selector -->
-      <div class="flex items-center gap-3">
+      <div class="flex flex-wrap items-center gap-2 sm:gap-3 min-w-0">
         <button
           onclick={() => appState.toggleTheme()}
           class="p-2.5 rounded-2xl border border-dark-charcoal/10 bg-bg-warm hover:bg-dark-charcoal/10 transition-all duration-200 cursor-pointer shrink-0"
@@ -259,24 +265,26 @@
           {/if}
         </button>
 
-        <div class="flex items-center gap-2 bg-bg-warm px-3.5 py-1.5 border border-dark-charcoal/15 rounded-xl transition-all shadow-sm">
-          <span class="text-xs font-bold text-accent-purple uppercase tracking-wider whitespace-nowrap">Target:</span>
+        <div class="flex items-center gap-2 bg-bg-warm px-3 py-1.5 sm:px-3.5 border border-dark-charcoal/15 rounded-xl transition-all shadow-sm max-w-full min-w-0">
+          <span class="text-xs font-bold text-accent-purple uppercase tracking-wider whitespace-nowrap shrink-0">Target:</span>
           {#if appState.scans.length > 0}
-            <CustomSelect
-              options={projectOptions()}
-              value={appState.selectedScanId}
-              onChange={(id) => appState.setSelectedScan(id)}
-              buttonClass="bg-transparent border-none py-0.5 text-sm font-semibold text-dark-charcoal focus:outline-none"
-            />
+            <div class="min-w-0 truncate">
+              <CustomSelect
+                options={projectOptions()}
+                value={appState.selectedScanId}
+                onChange={(id) => appState.setSelectedScan(id)}
+                buttonClass="bg-transparent border-none py-0.5 text-sm font-semibold text-dark-charcoal focus:outline-none max-w-full truncate"
+              />
+            </div>
           {:else}
-            <span class="text-sm font-bold text-dark-charcoal/50">No scans available</span>
+            <span class="text-sm font-bold text-dark-charcoal/50 truncate">No scans available</span>
           {/if}
         </div>
       </div>
     </header>
 
     <!-- Subpage Container -->
-    <main class="flex-1 p-6 md:p-8 overflow-y-auto max-w-[1600px] w-full mx-auto">
+    <main class="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto overflow-x-hidden max-w-[1600px] w-full mx-auto">
       {@render children()}
     </main>
   </div>
@@ -284,8 +292,8 @@
 
 <!-- Logout Confirmation Dialog -->
 {#if showLogoutModal}
-  <div class="fixed inset-0 z-50 flex items-center justify-center p-6 bg-dark-charcoal/40 backdrop-blur-sm">
-    <div class="bg-card-warm border border-dark-charcoal/10 p-8 rounded-3xl max-w-md w-full shadow-2xl animate-in fade-in zoom-in duration-200">
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-dark-charcoal/40 backdrop-blur-sm">
+    <div class="bg-card-warm border border-dark-charcoal/10 p-6 sm:p-8 rounded-3xl max-w-md w-full shadow-2xl animate-in fade-in zoom-in duration-200">
       <div class="w-12 h-12 rounded-2xl bg-red-100 text-red-500 flex items-center justify-center mb-6">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
       </div>
@@ -293,7 +301,7 @@
       <h3 class="text-2xl font-bold font-display text-dark-charcoal">Confirm Logout</h3>
       <p class="text-sm text-dark-charcoal/70 mt-2">Are you sure you want to end your current session and exit the console?</p>
       
-      <div class="mt-8 flex items-center gap-3">
+      <div class="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
         <button
           onclick={handleLogout}
           class="flex-1 bg-red-500 text-white font-bold py-3 rounded-xl hover:bg-red-600 transition-colors cursor-pointer"

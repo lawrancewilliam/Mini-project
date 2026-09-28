@@ -45,8 +45,8 @@
 
 <!-- Toast Notification -->
 {#if toast}
-  <div class="fixed top-4 right-4 z-[100] animate-in slide-in-from-right-4 fade-in duration-300">
-    <div class="flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl border text-sm font-bold {toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-700/50 text-emerald-300' : toast.type === 'error' ? 'bg-red-900/90 border-red-700/50 text-red-300' : 'bg-card-warm border-dark-charcoal/15 text-dark-charcoal'} backdrop-blur-md">
+  <div class="fixed top-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-auto z-[100] animate-in slide-in-from-right-4 fade-in duration-300">
+    <div class="flex items-center gap-3 px-4 sm:px-5 py-3.5 rounded-2xl shadow-2xl border text-sm font-bold {toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-700/50 text-emerald-300' : toast.type === 'error' ? 'bg-red-900/90 border-red-700/50 text-red-300' : 'bg-card-warm border-dark-charcoal/15 text-dark-charcoal'} backdrop-blur-md">
       {#if toast.type === 'success'}
         <svg class="w-5 h-5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
       {:else if toast.type === 'error'}
@@ -136,18 +136,18 @@
 
 <!-- Report Preview Modal -->
 {#if showPreviewModal && selectedProject}
-  <div class="fixed inset-0 z-50 flex items-center justify-center p-6 bg-dark-charcoal/40 backdrop-blur-sm">
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-dark-charcoal/40 backdrop-blur-sm">
     <div class="bg-card-warm border border-dark-charcoal/10 p-6 sm:p-8 rounded-3xl max-w-2xl w-full shadow-2xl flex flex-col max-h-[85vh]">
-      <div class="flex items-center justify-between border-b border-dark-charcoal/10 pb-4 mb-6">
-        <div>
+      <div class="flex items-center justify-between gap-3 border-b border-dark-charcoal/10 pb-4 mb-6">
+        <div class="min-w-0">
           <h3 class="text-xl font-bold font-display text-dark-charcoal">Report Document Preview</h3>
-          <p class="text-xs text-dark-charcoal/60 mt-0.5 font-semibold">Active project: {selectedProject.projectName}</p>
+          <p class="text-xs text-dark-charcoal/60 mt-0.5 font-semibold truncate">Active project: {selectedProject.projectName}</p>
         </div>
         <button
           type="button"
           aria-label="Close report preview"
           onclick={() => showPreviewModal = false}
-          class="text-dark-charcoal/60 hover:text-dark-charcoal p-1 cursor-pointer"
+          class="text-dark-charcoal/60 hover:text-dark-charcoal p-1 cursor-pointer shrink-0"
         >
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
@@ -172,7 +172,7 @@
         <div class="h-px bg-gradient-to-r from-accent-purple to-transparent mb-6"></div>
 
         <!-- Stats -->
-        <div class="grid grid-cols-4 gap-2 mb-6">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-6">
           <div class="bg-[#161616] border border-[#2a2a2a] rounded-xl p-3 text-center">
             <div class="text-[9px] text-gray-500 font-bold uppercase tracking-wider">Files</div>
             <div class="text-xl font-extrabold font-display text-white mt-1">{selectedProject.filesScanned}</div>

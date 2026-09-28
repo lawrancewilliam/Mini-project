@@ -101,7 +101,7 @@
       </div>
 
       <!-- Role Filter -->
-      <div class="flex items-center gap-1.5 bg-bg-warm border border-dark-charcoal/10 p-1 rounded-xl w-fit">
+      <div class="flex flex-wrap items-center gap-1.5 bg-bg-warm border border-dark-charcoal/10 p-1 rounded-xl w-fit">
         {#each ['All', 'Admin', 'Developer'] as filter}
           <button
             onclick={() => roleFilter = filter}
@@ -115,7 +115,7 @@
 
     <!-- Users Table -->
     <div class="overflow-x-auto">
-      <table class="w-full border-collapse text-left">
+      <table class="w-full border-collapse text-left min-w-[640px]">
         <thead>
           <tr class="border-b border-dark-charcoal/10 text-xs font-bold text-dark-charcoal/50 uppercase tracking-wider select-none">
             <th class="py-3 px-4">User</th>

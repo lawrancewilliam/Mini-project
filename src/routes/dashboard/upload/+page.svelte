@@ -130,13 +130,13 @@
           </div>
         {:else}
           <!-- File Selected Display -->
-          <div class="bg-bg-warm border border-dark-charcoal/10 rounded-2xl p-6 flex items-center justify-between">
-            <div class="flex items-center gap-4">
-              <div class="w-12 h-12 rounded-xl bg-accent-purple text-bg-warm flex items-center justify-center font-bold font-display text-lg shadow-sm">
+          <div class="bg-bg-warm border border-dark-charcoal/10 rounded-2xl p-4 sm:p-6 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3 sm:gap-4 min-w-0">
+              <div class="w-12 h-12 rounded-xl bg-accent-purple text-bg-warm flex items-center justify-center font-bold font-display text-lg shadow-sm shrink-0">
                 ZIP
               </div>
-              <div>
-                <div class="font-bold text-dark-charcoal text-base">{zipFile.name}</div>
+              <div class="min-w-0">
+                <div class="font-bold text-dark-charcoal text-base truncate">{zipFile.name}</div>
                 <div class="text-xs text-dark-charcoal/50 font-semibold mt-0.5">
                   Ready to scan • {zipFile.size ? (zipFile.size / (1024 * 1024)).toFixed(2) + ' MB' : 'Sandbox Simulated'}
                 </div>
@@ -147,7 +147,7 @@
               type="button"
               aria-label="Remove selected ZIP archive"
               onclick={removeFile}
-              class="text-red-500 hover:bg-red-50 p-2.5 rounded-xl transition-colors cursor-pointer"
+              class="text-red-500 hover:bg-red-50 p-2.5 rounded-xl transition-colors cursor-pointer shrink-0"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
